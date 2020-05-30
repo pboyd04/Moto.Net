@@ -1,9 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.26430.13
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30104.148
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Moto.Net", "Moto.Net\Moto.Net.csproj", "{FA31F775-2F41-4CBF-94F6-797CCA9E3966}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MotoMond", "MotoMond\MotoMond.csproj", "{E3AC95AD-4215-4776-ADA9-8C60461B5398}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Moto.Net.RPC", "Moto.Net.RPC\Moto.Net.RPC.csproj", "{48B47469-E2C0-4713-9D60-F119A6B708F5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,8 +19,19 @@ Global
 		{FA31F775-2F41-4CBF-94F6-797CCA9E3966}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FA31F775-2F41-4CBF-94F6-797CCA9E3966}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FA31F775-2F41-4CBF-94F6-797CCA9E3966}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E3AC95AD-4215-4776-ADA9-8C60461B5398}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E3AC95AD-4215-4776-ADA9-8C60461B5398}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E3AC95AD-4215-4776-ADA9-8C60461B5398}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E3AC95AD-4215-4776-ADA9-8C60461B5398}.Release|Any CPU.Build.0 = Release|Any CPU
+		{48B47469-E2C0-4713-9D60-F119A6B708F5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{48B47469-E2C0-4713-9D60-F119A6B708F5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{48B47469-E2C0-4713-9D60-F119A6B708F5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{48B47469-E2C0-4713-9D60-F119A6B708F5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {88928335-53EE-4DB9-BA44-184FB5601175}
 	EndGlobalSection
 EndGlobal
