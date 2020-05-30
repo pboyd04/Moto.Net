@@ -15,6 +15,7 @@ using System.Net;
 using Moto.Net.Mototrbo.LRRP;
 using PcapDotNet.Packets.IpV4;
 using Moto.Net.Mototrbo.TMS;
+using System.Text;
 
 namespace MotoMond
 {
@@ -120,6 +121,7 @@ namespace MotoMond
             tms = new TMSClient();
             sys.RegisterLRRPClient(lrrp);
             sys.RegisterTMSClient(tms);
+            CommandProcessor cmd = new CommandProcessor(sys, lrrp, tms);
 
             while (go)
             {
@@ -128,18 +130,6 @@ namespace MotoMond
                 string[] parts = cmdStr.Split(' ');
                 switch(parts[0])
                 {
-                    case "check":
-                        RadioCheck(sys, parts.Skip(1).ToArray());
-                        break;
-                    case "locate":
-                        RadioLocate(sys, parts.Skip(1).ToArray());
-                        break;
-                    case "text":
-                        RadioText(sys, parts.Skip(1).ToArray());
-                        break;
-                    case "getip":
-                        Console.WriteLine("Radio IP: {0}", sys.GetIPForRadio(new RadioID(uint.Parse(parts[1]))));
-                        break;
                     case "exit":
                         go = false;
                         break;
@@ -147,85 +137,33 @@ namespace MotoMond
                         //Just print the new command line
                         break;
                     default:
-                        Console.WriteLine("Unknown command \"{0}\"", parts[0]);
+                        CommandResult res = cmd.ProcessCommand(parts[0], parts.Skip(1).ToArray());
+                        if(res.Success == false)
+                        {
+                            if (res.ex != null)
+                            {
+                                Console.WriteLine("Command Failed! "+res.ex);
+                            }
+                            else
+                            {
+                                Console.WriteLine("Command Failed!");
+                            }
+                        }
+                        else
+                        {
+                            StringBuilder sb = new StringBuilder();
+                            foreach(KeyValuePair<string, object> pair in res.Data)
+                            {
+                                sb.Append(pair.Key + ": " + pair.Value + ", ");
+                            }
+                            Console.WriteLine("Success! "+sb.ToString());
+                        }
                         break;
                 }
             }
             sys.Dispose();
             lrrp.Dispose();
             tms.Dispose();
-        }
-
-        private static void RadioCheck(RadioSystem sys, string[] args)
-        {
-            if(args.Length < 1)
-            {
-                Console.WriteLine("Missing required arugment radio id");
-                return;
-            }
-            uint id = uint.Parse(args[0]);
-            float rssi = 0.0F;
-            bool ret = sys.RadioCheck(new RadioID(id), ref rssi);
-            if(ret)
-            {
-                Console.WriteLine("    Got response from {0} with RSSI {1}", id, rssi);
-            }
-            else
-            {
-                Console.WriteLine("    No response from radio {0}", id);
-            }
-        }
-
-        private static void RadioLocate(RadioSystem sys, string[] args)
-        {
-            if (args.Length < 1)
-            {
-                Console.WriteLine("Missing required arugment radio id");
-                return;
-            }
-            uint id = uint.Parse(args[0]);
-            Tuple<float, float, float?> ret = lrrp.GetCurrentLocation(new RadioID(id), sys);
-            if(ret.Item1 == 0.0f)
-            {
-                Console.WriteLine("    Failed to get location from radio {0}", id);
-            }
-            else
-            {
-                if (ret.Item3.HasValue)
-                {
-                    Console.WriteLine("    Radio {0} is @ {1}, {2} and repeater RSSI is {3}", id, ret.Item1, ret.Item2, ret.Item3);
-                }
-                else
-                {
-                    Console.WriteLine("    Radio {0} is @ {1}, {2}", id, ret.Item1, ret.Item2);
-                }
-            }
-
-        }
-
-        private static void RadioText(RadioSystem sys, string[] args)
-        {
-            if (args.Length < 1)
-            {
-                Console.WriteLine("Missing required arugment radio id");
-                return;
-            }
-            if(args.Length < 2)
-            {
-                Console.WriteLine("Missing required arugment message");
-                return;
-            }
-            uint id = uint.Parse(args[0]);
-            string message = string.Join(" ", args.Skip(1).ToArray());
-            bool ret = tms.SendText(message, new RadioID(id), sys, true);
-            if(ret)
-            {
-                Console.WriteLine("    Got confirmation from {0}", id);
-            }
-            else
-            {
-                Console.WriteLine("    No response from radio {0}", id);
-            }
         }
 
         private static void GetRSSI(Object src, System.Timers.ElapsedEventArgs e)
