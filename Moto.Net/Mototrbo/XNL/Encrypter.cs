@@ -4,9 +4,15 @@ using System.Configuration;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Reflection;
 
 namespace Moto.Net.Mototrbo.XNL
 {
+    interface MotoEncrpter
+    {
+        byte[] EncryptAuthKey(byte[] data);
+    }
+
     public static class Encrypter
     {
         public static byte[] Encrypt(byte[] data)
@@ -14,16 +20,33 @@ namespace Moto.Net.Mototrbo.XNL
             UInt32 dword1 = Encrypter.ArrayToInt(data, 0);
             UInt32 dword2 = Encrypter.ArrayToInt(data, 4);
             string const1Str = ConfigurationManager.AppSettings.Get("XNLConst1");
-            UInt32 num1 = UInt32.Parse(const1Str);
             string const2Str = ConfigurationManager.AppSettings.Get("XNLConst2");
-            UInt32 num2 = UInt32.Parse(const2Str);
             string const3Str = ConfigurationManager.AppSettings.Get("XNLConst3");
-            UInt32 num3 = UInt32.Parse(const3Str);
             string const4Str = ConfigurationManager.AppSettings.Get("XNLConst4");
-            UInt32 num4 = UInt32.Parse(const4Str);
             string const5Str = ConfigurationManager.AppSettings.Get("XNLConst5");
-            UInt32 num5 = UInt32.Parse(const5Str);
             string const6Str = ConfigurationManager.AppSettings.Get("XNLConst6");
+            if(const1Str == null || const2Str == null || const3Str == null || const4Str == null || const5Str == null || const6Str == null)
+            {
+                //See if we have TRBONet server
+                Console.WriteLine("Falling back to trbonet crypter...");
+                try
+                {
+                    Assembly trbonet = Assembly.LoadFrom("TRBOnet.Server.exe");
+                    Type crypter = trbonet.GetType("NS.Enginee.Mototrbo.Utils.XNLRepeaterCrypter");
+                    MethodInfo mi = crypter.GetMethod("Encrypt", BindingFlags.Public | BindingFlags.Static);
+                    //The method alters the data in place...
+                    mi.Invoke(null, new object[] { data });
+                    return data;
+                } catch(Exception ex)
+                {
+                    throw new Exception("Unable to encrypt XNL data!", ex);
+                }
+            }
+            UInt32 num1 = UInt32.Parse(const1Str);
+            UInt32 num2 = UInt32.Parse(const2Str);
+            UInt32 num3 = UInt32.Parse(const3Str);
+            UInt32 num4 = UInt32.Parse(const4Str);
+            UInt32 num5 = UInt32.Parse(const5Str);
             UInt32 num6 = UInt32.Parse(const6Str);
             for (int index = 0; index < 32; ++index)
             {
