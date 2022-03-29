@@ -9,6 +9,11 @@ namespace Moto.Net.RPC
         protected string method;
         protected object[] args;
 
+        public RPCMethod()
+        {
+
+        }
+
         public RPCMethod(string method)
         {
             this.method = method;
