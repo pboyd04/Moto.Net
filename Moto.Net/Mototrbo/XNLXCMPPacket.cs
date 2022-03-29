@@ -20,6 +20,7 @@ namespace Moto.Net.Mototrbo
         {
             this.id = id;
             this.data = pkt.Encode();
+            this.xnl = pkt;
         }
 
         protected override string DataString()
