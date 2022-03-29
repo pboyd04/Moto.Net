@@ -12,6 +12,10 @@ namespace Moto.Net.Mototrbo.XNL.XCMP
 
         public RadioStatusReply(byte[] data) : base(data)
         {
+            if(data.Length < 4)
+            {
+                return;
+            }
             this.statusType = (XCMPStatus)data[3];
             this.data = data.Skip(4).ToArray();
         }
