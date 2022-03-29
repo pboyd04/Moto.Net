@@ -210,6 +210,9 @@ namespace Moto.Net.Mototrbo.Bursts
                     return CSBKBurst.Decode(data);
                 case DataType.DataHeader:
                     return new DataHeader(data);
+                case DataType.RateThreeQuarter:
+                    //Thsi only seems to be used for data bursts
+                    return new DataBurst(data);
                 case DataType.RateFullData:
                     //This only seems to be used for voice bursts
                     return new VoiceBurst(data);
