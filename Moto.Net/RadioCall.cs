@@ -6,6 +6,7 @@ using Moto.Net.Audio;
 
 using System.Threading;
 using System.Text.Json.Serialization;
+using System.Linq;
 
 namespace Moto.Net
 {
@@ -13,7 +14,7 @@ namespace Moto.Net
     {
         protected DateTime startTime;
         protected DateTime endTime;
-        protected List<Burst> bursts;
+        protected SortedList<UInt16, Burst> bursts;
         protected bool isGroupCall;
         protected bool isAudio;
         protected bool isEncrypted;
@@ -26,13 +27,14 @@ namespace Moto.Net
 
         protected RadioCall()
         {
-            this.bursts = new List<Burst>();
+            this.bursts = new SortedList<UInt16, Burst>();
         }
 
         protected RadioCall(UserPacket upkt)
         {
             this.startTime = DateTime.Now;
-            this.bursts = new List<Burst>() { upkt.Burst };
+            this.bursts = new SortedList<UInt16, Burst>();
+            this.bursts[upkt.RTP.SequenceNumber] = upkt.Burst;
             this.isGroupCall = (upkt.PacketType == PacketType.GroupDataCall || upkt.PacketType == PacketType.GroupVoiceCall);
             this.isAudio = (upkt.PacketType == PacketType.PrivateVoiceCall || upkt.PacketType == PacketType.GroupVoiceCall);
             this.from = upkt.Source;
@@ -97,7 +99,7 @@ namespace Moto.Net
             {
                 int count = 0;
                 float rssi = 0;
-                foreach(Burst b in this.bursts)
+                foreach(Burst b in this.bursts.Values)
                 {
                     if(b.HasRSSI)
                     {
@@ -113,7 +115,7 @@ namespace Moto.Net
         {
             get
             {
-                return bursts[0].Slot;
+                return bursts.Values[0].Slot;
             }
         }
 
@@ -123,23 +125,25 @@ namespace Moto.Net
             get
             {
                 List<byte> buffer = new List<byte>();
-                foreach (Burst b in this.bursts)
+                foreach (KeyValuePair<UInt16, Burst> pair in this.bursts)
                 {
+                    //Console.WriteLine("Burst sequence number is {0}", pair.Key);
+                    Burst b = pair.Value;
                     if (b.Type == DataType.DataHeader)
                     {
                         continue;
                     }
-                    else if(b.Type == DataType.RateFullData)
+                    else if (b.Type == DataType.RateFullData)
                     {
                         VoiceBurst vb = (VoiceBurst)b;
-                        for(int i = 0; i < 3; i++)
+                        for (int i = 0; i < 3; i++)
                         {
                             byte[] data = vb.Frames[i];
                             buffer.AddRange(data);
                         }
                         continue;
                     }
-                    else if(b.Type == DataType.UnknownSmall)
+                    else if (b.Type == DataType.UnknownSmall)
                     {
                         //Ignore...
                     }
@@ -158,27 +162,39 @@ namespace Moto.Net
         {
             get
             {
-                AMBEConverter ac = new AMBEConverter();
-                List<byte> buffer = new List<byte>();
-                foreach (Burst b in this.bursts)
+                try
                 {
-                    if (b.Type == DataType.RateFullData)
+                    AMBEConverter ac = new AMBEConverter();
+                    List<byte> buffer = new List<byte>();
+                    foreach (Burst b in this.bursts.Values)
                     {
-                        VoiceBurst vb = (VoiceBurst)b;
-                        for (int i = 0; i < 3; i++)
+                        if (b.Type == DataType.RateFullData)
                         {
-                            byte[] data = vb.Frames[i];
-                            buffer.AddRange(ac.Decode(data));
+                            VoiceBurst vb = (VoiceBurst)b;
+                            for (int i = 0; i < 3; i++)
+                            {
+                                byte[] data = vb.Frames[i];
+                                buffer.AddRange(ac.Decode(data));
+                            }
                         }
                     }
+                    return buffer.ToArray();
                 }
-                return buffer.ToArray();
+                catch (AudioNotSupportedException)
+                {
+                    //Can't do audio
+                    return null;
+                }
             }
         }
 
         public void AppendPkt(UserPacket upkt)
         {
-            this.bursts.Add(upkt.Burst);
+            if(upkt.GroupTag != this.groupTag)
+            {
+                Console.WriteLine("Got packet with mismatching group tag! {0} != {1}", upkt.GroupTag, this.groupTag);
+            }
+            this.bursts.Add(upkt.RTP.SequenceNumber, upkt.Burst);
             this.isEnded = upkt.End;
             if(upkt.End)
             {
@@ -196,11 +212,20 @@ namespace Moto.Net
                     //Make sure we get different timestamps...
                     Thread.Sleep(1);
                 }
-                UserPacket pkt = new UserPacket(initiator, !this.isAudio, this.isGroupCall, this.from, this.to, this.isEncrypted, this.isPhoneCall, this.groupTag, this.bursts[i]);
+                UserPacket pkt = new UserPacket(initiator, !this.isAudio, this.isGroupCall, this.from, this.to, this.isEncrypted, this.isPhoneCall, this.groupTag, this.bursts[(UInt16)i]);
                 ret[i] = pkt;
             }
             ret[ret.Length - 1].End = true;
             return ret;
+        }
+
+        [JsonIgnore]
+        public SortedList<UInt16, Burst> Bursts
+        {
+            get
+            {
+                return this.bursts;
+            }
         }
     }
 }

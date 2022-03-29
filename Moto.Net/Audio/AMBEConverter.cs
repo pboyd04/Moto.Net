@@ -41,7 +41,13 @@ namespace Moto.Net.Audio
             this.encoderOutputHandle = GCHandle.Alloc((object)this.encoderOutput, GCHandleType.Pinned);
             this.encoderInput = new short[160];
             this.encoderInputHandle = GCHandle.Alloc((object)this.encoderInput, GCHandleType.Pinned);
-            AMBEConverter.DSPINI_DMR_Encoder_Init(Marshal.UnsafeAddrOfPinnedArrayElement<byte>(this.encoderWorkingBuffer, 0), 0, 1);
+            try
+            {
+                AMBEConverter.DSPINI_DMR_Encoder_Init(Marshal.UnsafeAddrOfPinnedArrayElement<byte>(this.encoderWorkingBuffer, 0), 0, 1);
+            } catch(DllNotFoundException ex)
+            {
+                throw new AudioNotSupportedException("Audio Not supported!", ex);
+            }
         }
 
         public override byte[] Decode(byte[] data)
