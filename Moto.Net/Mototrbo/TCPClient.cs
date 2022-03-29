@@ -14,6 +14,7 @@ namespace Moto.Net.Mototrbo
 {
     public class TCPClient : IDisposable
     {
+        private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
         protected System.Net.Sockets.TcpClient rawClient;
         protected IPEndPoint ep;
         protected bool running;
@@ -51,28 +52,36 @@ namespace Moto.Net.Mototrbo
 
         private void GotData(IAsyncResult result)
         {
-            int count = this.stream.EndRead(result);
-            if(count > 0)
+            try
             {
-                byte[] tmpBuffer = new byte[count];
-                Buffer.BlockCopy(this.buffer, 0, tmpBuffer, 0, count);
-                XNLPacket p = XNLPacket.Decode(tmpBuffer);
-                //Console.WriteLine("Recieved {0}", p);
-                XNLXCMPPacket pkt = new XNLXCMPPacket(new RadioID(0), p);
-                PacketEventArgs e = new PacketEventArgs(pkt, this.ep);
-                if (this.GotXNLXCMPPacket != null)
+                int count = this.stream.EndRead(result);
+                if (count > 0)
                 {
-                    this.GotXNLXCMPPacket(this, e);
+                    byte[] tmpBuffer = new byte[count];
+                    Buffer.BlockCopy(this.buffer, 0, tmpBuffer, 0, count);
+                    XNLPacket p = XNLPacket.Decode(tmpBuffer);
+                    log.DebugFormat("Recieved {0}", p);
+                    XNLXCMPPacket pkt = new XNLXCMPPacket(new RadioID(0), p);
+                    PacketEventArgs e = new PacketEventArgs(pkt, this.ep);
+                    if (this.GotXNLXCMPPacket != null)
+                    {
+                        this.GotXNLXCMPPacket(this, e);
+                    }
+                    else if (!ignoreUnknown)
+                    {
+                        log.ErrorFormat("Got an unknown packet {0}", p);
+                        output.Add(pkt);
+                        this.thread = new Thread(this.SendOld);
+                        this.thread.Start();
+                    }
                 }
-                else if (!ignoreUnknown)
-                {
-                    Console.WriteLine("Got an unknown packet {0}", p);
-                    output.Add(pkt);
-                    this.thread = new Thread(this.SendOld);
-                    this.thread.Start();
-                }
+                this.stream.BeginRead(buffer, 0, buffer.Length, new AsyncCallback(this.GotData), null);
             }
-            this.stream.BeginRead(buffer, 0, buffer.Length, new AsyncCallback(this.GotData), null);
+            catch(ObjectDisposedException)
+            {
+                //TCPClient is being disposed, this is fine, just ignore this exception
+                return;
+            }
         }
 
         public void SendOld()
@@ -93,7 +102,7 @@ namespace Moto.Net.Mototrbo
         public bool Send(XNLPacket packet)
         {
             byte[] bytes;
-            //Console.WriteLine("Sending packet {0} to {1}", packet, this.ep);
+            log.DebugFormat("Sending packet {0} to {1}", packet, this.ep);
             bytes = packet.Encode();
             this.stream.Write(bytes, 0, bytes.Length);
             return true;
@@ -112,7 +121,10 @@ namespace Moto.Net.Mototrbo
         {
             if (!disposedValue)
             {
-                this.thread.Abort();
+                if (this.thread != null)
+                {
+                    this.thread.Abort();
+                }
                 if (disposing)
                 {
                     this.rawClient.Close();

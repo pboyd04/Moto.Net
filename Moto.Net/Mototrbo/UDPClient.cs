@@ -25,6 +25,7 @@ namespace Moto.Net.Mototrbo
 
     public class UDPClient : IDisposable
     {
+        private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
         protected System.Net.Sockets.UdpClient rawClient;
         protected bool running;
         protected bool ignoreUnknown;
@@ -62,7 +63,7 @@ namespace Moto.Net.Mototrbo
                 IPEndPoint RemoteIpEndPoint = new IPEndPoint(IPAddress.Any, 0);
                 Byte[] receiveBytes = this.rawClient.Receive(ref RemoteIpEndPoint);
                 Packet p = Packet.Decode(receiveBytes);
-                //Console.WriteLine("Recieved {0}", p.ToString());
+                log.DebugFormat("Recieved {0}", p.ToString());
                 PacketEventArgs e = new PacketEventArgs(p, RemoteIpEndPoint);
                 switch (p.PacketType)
                 {
@@ -137,7 +138,7 @@ namespace Moto.Net.Mototrbo
                         {
                             continue;
                         }
-                        Console.WriteLine("Got an unknown packet {0}", p);
+                        log.ErrorFormat("Got an unknown packet {0}", p);
                         output.Add(p);
                         break;
                 }
@@ -148,7 +149,7 @@ namespace Moto.Net.Mototrbo
         {
             byte[] bytes;
             int ret;
-            //Console.WriteLine("Sending packet {0} to {1}", packet, remotesystem);
+            log.DebugFormat("Sending packet {0} to {1}", packet, remotesystem);
             bytes = packet.Encode();
             ret = this.rawClient.Send(bytes, bytes.Length, remotesystem);
             return (ret == bytes.Length);

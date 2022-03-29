@@ -12,6 +12,7 @@ namespace Moto.Net
 {
     public class MasterRadio : IPRadio
     {
+        private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
         public MasterRadio(RadioSystem sys, IPEndPoint ipend) : base(sys, ipend)
         {
             this.sys.client.GotRegistrationReply += new PacketHandler(this.HandleRegistrationPacket);
@@ -23,7 +24,7 @@ namespace Moto.Net
             MasterRegistrationReply mrPkt = (MasterRegistrationReply)e.packet;
             this.id = mrPkt.ID;
             this.sys.client.GotRegistrationReply -= this.HandleRegistrationPacket;
-            //Console.WriteLine("Found Master Radio {0}", this.id);
+            log.DebugFormat("Found Master Radio {0}", this.id);
             //Start Keep Alive
             this.sys.client.GotMasterKeepAliveReply += new PacketHandler(this.HandleKeepAlive);
             MasterKeepAliveRequest kapkt = new MasterKeepAliveRequest(this.sys.ID, this.sys.SystemType);

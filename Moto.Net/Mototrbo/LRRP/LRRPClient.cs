@@ -39,6 +39,7 @@ namespace Moto.Net.Mototrbo.LRRP
 
     public class LRRPClient : IDisposable
     {
+        private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
         protected UdpClient client;
         protected bool running;
         protected Thread thread;
@@ -73,8 +74,9 @@ namespace Moto.Net.Mototrbo.LRRP
                 this.recentlyHandled.RemoveAll(x => x.Timestamp.AddSeconds(5) < DateTime.Now);
                 IPEndPoint RemoteIpEndPoint = new IPEndPoint(IPAddress.Any, 0);
                 Byte[] receiveBytes = this.client.Receive(ref RemoteIpEndPoint);
+
                 LRRPPacket p = LRRPPacket.Decode(receiveBytes);
-                //Console.WriteLine("Got LRRP Packet {0}", p);
+                log.DebugFormat("Got LRRP Packet {0}", p);
                 LRRPPacketEventArgs e = new LRRPPacketEventArgs(p, RemoteIpEndPoint);
                 bool handled = false;
                 foreach(LRRPPacketEventArgs x in this.recentlyHandled)
@@ -141,7 +143,7 @@ namespace Moto.Net.Mototrbo.LRRP
                     }
                     return false;
                 default:
-                    Console.WriteLine("Got an unknown LRRP packet {0}", e.Packet);
+                    log.ErrorFormat("Got an unknown LRRP packet {0}", e.Packet);
                     return false;
             }
         }
@@ -339,7 +341,6 @@ namespace Moto.Net.Mototrbo.LRRP
             LRRPPacketEventArgs myE = new LRRPPacketEventArgs(pkt, new IPEndPoint(ipAddress, 4001), call);
             foreach (KeyValuePair<LRRPPacketEventArgs, System.Timers.Timer> pair in this.recentlyRecieved)
             {
-                Console.WriteLine("Does {0} == {1}", pair.Key.Endpoint.Address, ipAddress);
                 if (pair.Key.Endpoint.Address.Equals(ipAddress))
                 {
                     if (pair.Key.Packet.Type == pkt.Type && pair.Key.Packet.RequestID == pkt.RequestID)

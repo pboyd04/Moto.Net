@@ -25,6 +25,7 @@ namespace Moto.Net
 
     public class DataCall : RadioCall
     {
+        private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
         protected PcapDotNet.Packets.IpV4.IpV4Datagram _datagram;
 
         public DataCall() : base()
@@ -84,7 +85,7 @@ namespace Moto.Net
                         }
                         else
                         {
-                            Console.WriteLine("Unknown data header type {0}", dh.ContentType);
+                            log.ErrorFormat("Unknown data header type {0}", dh.ContentType);
                         }
                     }
                     else if(b.Type == Mototrbo.Bursts.DataType.UnknownSmall)
@@ -93,7 +94,7 @@ namespace Moto.Net
                     }
                     else
                     {
-                        Console.WriteLine("Unknown burst type {0}", b.Type);
+                        log.ErrorFormat("Unknown burst type {0}", b.Type);
                     }
                 }
                 if(this.Data == null || this.Data.Length == 0)
@@ -123,11 +124,11 @@ namespace Moto.Net
                     {
                         if(b.Type != Mototrbo.Bursts.DataType.CSBK)
                         {
-                            Console.WriteLine("Got non-CSBK burst in CSBK data call? {0}", b);
+                            log.ErrorFormat("Got non-CSBK burst in CSBK data call? {0}", b);
                             continue;
                         }
                         cb = (CSBKBurst)b;
-                        Console.WriteLine("OpCode = "+cb.CSBKOpCode+", Feature ID = "+cb.FeatureID+", Data = "+BitConverter.ToString(cb.Data));
+                        log.InfoFormat("OpCode = "+cb.CSBKOpCode+", Feature ID = "+cb.FeatureID+", Data = "+BitConverter.ToString(cb.Data));
                     }
                 }
                 else if(ret == CallDataType.UnknownIP)

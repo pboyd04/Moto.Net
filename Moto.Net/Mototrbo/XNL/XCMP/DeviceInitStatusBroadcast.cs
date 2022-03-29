@@ -10,12 +10,18 @@ namespace Moto.Net.Mototrbo.XNL.XCMP
     {
         DeviceFamily = 0, //5 seems to be the normal value here (but I'm supposed to send 0 from what I can see in responses)
         Display = 2, //0 means none
-        RFBand = 4, //1 seems to be UHF
+        RFBand = 4, //1 seems to be UHF (as does 9...)
         GPIO = 5,
         RadioType = 7, //Seems to be 0 for mobile, 1 for portable, and 2 for repeaters
-        Keypad = 9, //0 means none
-        ChannelKnob = 13, //0 means none
-        VirtualPersonality = 14 //No idea what this means
+        Keypad = 9, //I think this is just boolean, 0 or 1
+        ChannelKnob = 13, //0 means none, 255 means the free spinning ones, otherwise it is the number of channels on the dial.
+        VirtualPersonality = 14, //No idea what this means
+        Bluetooth = 17, //255 means no bluetooth, 253 means turned off, 0 means yes
+        GPS = 20, //255 means no GPS support, 253 means turned off, 0 means yes
+        //1, 10, and 19 have started showing up on newer radios. don't know what they mean yet...
+        //1 - 0 XPR3550,XPR3550e,XPR7550e
+        //10 - 1 XPR3550,XPR3550e
+        //19 - 255 XPR3550,XP3550e,XPR7550e
     }
 
     public struct DeviceStatus
@@ -64,7 +70,6 @@ namespace Moto.Net.Mototrbo.XNL.XCMP
                     }
                 }
             }
-            //Console.WriteLine(this);
         }
 
         public DeviceInitStatusBroadcast(string version, XNLDevType entityType, byte initComplete, DeviceStatus Status) : base(XCMPOpCode.DeviceinitStatusBroadcast)

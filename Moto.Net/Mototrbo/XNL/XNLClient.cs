@@ -22,6 +22,7 @@ namespace Moto.Net.Mototrbo.XNL
 
     public class XNLClient
     {
+        private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
         private int initRetryCount = 0;
 
         protected Radio r;
@@ -66,7 +67,7 @@ namespace Moto.Net.Mototrbo.XNL
                     this.ProcessSysMap((DevSysMapBroadcastPacket)xnl);
                     break;
                 case OpCode.MasterStatusBroadcast:
-                    //Console.WriteLine("Got master status broadcast...");
+                    log.Debug("Got master status broadcast...");
                     this.masterID = xnl.Source;
                     break;
                 case OpCode.DeviceAuthKeyReply:
@@ -89,14 +90,14 @@ namespace Moto.Net.Mototrbo.XNL
                     this.pendingTransactions.Remove(xnl.TransactionID);
                     break;
                 default:
-                    Console.WriteLine("Unhandled XNL Data: {0}", xnl);
+                    log.ErrorFormat("Unhandled XNL Data: {0}", xnl);
                     break;
             }
         }
 
         private bool Init()
         {
-            //Console.WriteLine("Initializing...");
+            log.Debug("Initializing...");
             if (!(this.r is LocalRadio))
             {
                 XNLPacket initPkt = new InitPacket();
@@ -124,14 +125,14 @@ namespace Moto.Net.Mototrbo.XNL
 
         private void GetAuthKey()
         {
-            //Console.WriteLine("Sending auth key request...");
+            log.Debug("Sending auth key request...");
             XNLPacket pkt = new DevAuthKeyRequestPacket(this.masterID);
             this.SendPacket(pkt);
         }
 
         private void StartConnection(DevAuthKeyReplyPacket pkt)
         {
-            //Console.WriteLine("Sending connection request {0}...", pkt.TempID);
+            log.DebugFormat("Sending connection request {0}...", pkt.TempID);
             XNLPacket newPkt = new DevConnectionRequestPacket(this.masterID, pkt.TempID, new Address(0), 0x0A, 0x01, pkt.AuthKey, (this.r is MasterRadio));
             this.SendPacket(newPkt);
         }
@@ -145,7 +146,7 @@ namespace Moto.Net.Mototrbo.XNL
                     //This is me or the already connected master, skip it...
                     continue;
                 }
-                //Console.WriteLine("Adding Radio... {0}", dev);
+                log.DebugFormat("Adding Radio... {0}", dev);
                 this.otherRadios.Add(dev);
             }
         }
@@ -195,7 +196,7 @@ namespace Moto.Net.Mototrbo.XNL
                 t.Elapsed += (sender, e) => this.ResendPacket(sender, e, xnl.TransactionID);
             }
             XNLXCMPPacket pkt = new XNLXCMPPacket(this.id, xnl);
-            Console.WriteLine("Sending {0} to {1}", pkt, xnl.Destination);
+            log.DebugFormat("Sending {0} to {1}", pkt, xnl.Destination);
             r.SendPacket(pkt);
         }
 
@@ -203,7 +204,7 @@ namespace Moto.Net.Mototrbo.XNL
         {
             if(this.pendingTransactions.ContainsKey(transactionID))
             {
-                Console.WriteLine("Transaction {0} is still pending...", transactionID);
+                log.InfoFormat("Transaction {0} is still pending...", transactionID);
                 //TODO actually resend the packet if needed
             }
         }

@@ -24,6 +24,7 @@ namespace Moto.Net
 
     public abstract class Radio : IDisposable
     {
+        private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
         protected bool isDisposed;
         protected RadioID id;
         protected RadioSystem sys;
@@ -201,12 +202,12 @@ namespace Moto.Net
             RadioID to = upkt.Destination;
             if(activeCalls.ContainsKey(to))
             {
-                //Console.WriteLine("Appending to active call...");
+                log.Debug("Appending to active call...");
                 activeCalls[to].AppendPkt(upkt);
             }
             else
             {
-                //Console.WriteLine("Creating new call...");
+                log.Debug("Creating new call...");
                 if (upkt.PacketType == PacketType.GroupDataCall || upkt.PacketType == PacketType.PrivateDataCall)
                 {
                     activeCalls[to] = new DataCall(upkt);

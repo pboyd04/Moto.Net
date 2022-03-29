@@ -8,13 +8,10 @@ using System.Reflection;
 
 namespace Moto.Net.Mototrbo.XNL
 {
-    interface MotoEncrpter
-    {
-        byte[] EncryptAuthKey(byte[] data);
-    }
-
     public static class Encrypter
     {
+        private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+
         public static byte[] Encrypt(byte[] data)
         {
             UInt32 dword1 = Encrypter.ArrayToInt(data, 0);
@@ -28,7 +25,7 @@ namespace Moto.Net.Mototrbo.XNL
             if(const1Str == null || const2Str == null || const3Str == null || const4Str == null || const5Str == null || const6Str == null)
             {
                 //See if we have TRBONet server
-                Console.WriteLine("Falling back to trbonet crypter...");
+                log.Info("Falling back to trbonet crypter...");
                 try
                 {
                     Assembly trbonet = Assembly.LoadFrom("TRBOnet.Server.exe");
@@ -73,7 +70,7 @@ namespace Moto.Net.Mototrbo.XNL
             if (const1Str == null || const2Str == null || const3Str == null || const4Str == null || const5Str == null || const6Str == null)
             {
                 //See if we have TRBONet server
-                Console.WriteLine("Falling back to trbonet crypter...");
+                log.Info("Falling back to trbonet crypter...");
                 try
                 {
                     Assembly trbonet = Assembly.LoadFrom("TRBOnet.Server.exe");

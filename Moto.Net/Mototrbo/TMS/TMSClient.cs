@@ -38,6 +38,7 @@ namespace Moto.Net.Mototrbo.TMS
 
     public class TMSClient : IDisposable
     {
+        private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
         protected UdpClient client;
         protected bool running;
         protected Thread thread;
@@ -124,7 +125,7 @@ namespace Moto.Net.Mototrbo.TMS
                     }
                     return false;
                 default:
-                    Console.WriteLine("Got an unknown TMS packet {0}", e.Packet);
+                    log.ErrorFormat("Got an unknown TMS packet {0}", e.Packet);
                     return false;
             }
         }
@@ -227,7 +228,6 @@ namespace Moto.Net.Mototrbo.TMS
             TMSMessageEventArgs myE = new TMSMessageEventArgs(pkt, new IPEndPoint(ipAddress, 4001), call);
             foreach (KeyValuePair<TMSMessageEventArgs, System.Timers.Timer> pair in this.recentlyRecieved)
             {
-                Console.WriteLine("Does {0} == {1}", pair.Key.Endpoint.Address, ipAddress);
                 if (pair.Key.Endpoint.Address.Equals(ipAddress))
                 {
                     if (pair.Key.Packet.Type == pkt.Type && pair.Key.Packet.SequenceNumber == pkt.SequenceNumber)

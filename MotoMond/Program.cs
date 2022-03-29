@@ -87,10 +87,16 @@ namespace MotoMond
                 {
                     Console.WriteLine("Found potential control station on {0}", iface.Name);
                     var ips = iface.GetIPProperties().GatewayAddresses;
-                    LocalRadio lr = new LocalRadio(sys, ips[0].Address);
-                    ProcessRadio(lr, "Control Station");
+                    using (LocalRadio lr = new LocalRadio(sys, ips[0].Address))
+                    {
+                        ProcessRadio(lr, "Control Station");
+                    }
                 }
             }
+            /*using (Radio r = new LocalRadio(sys, IPAddress.Parse("12.0.3.240")))
+            {
+                ProcessRadio(r, "Network Test");
+            }*/
             CommandProcessor cmd = new CommandProcessor(sys, lrrp, tms);
             lrrp.GotLocationData += Lrrp_GotLocationData;
             RunCli(cmd);

@@ -60,6 +60,7 @@ namespace Moto.Net
 
             if (disposing)
             {
+                client.Dispose();
             }
 
             isDisposed = true;

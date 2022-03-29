@@ -17,6 +17,7 @@ namespace Moto.Net
 {
     public class RadioSystem : IDisposable
     {
+        private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
         private readonly RadioID myID;
         private readonly RadioSystemType type;
         protected internal UDPClient client;
@@ -241,12 +242,12 @@ namespace Moto.Net
             RadioID to = upkt.Destination;
             if (activeCalls.ContainsKey(to))
             {
-                //Console.WriteLine("Appending to active call...");
+                log.Info("Appending to active call...");
                 activeCalls[to].AppendPkt(upkt);
             }
             else
             {
-                //Console.WriteLine("Creating new call...");
+                log.Info("Creating new call...");
                 if (upkt.PacketType == PacketType.GroupDataCall || upkt.PacketType == PacketType.PrivateDataCall)
                 {
                     activeCalls[to] = new DataCall(upkt);
@@ -329,20 +330,20 @@ namespace Moto.Net
 
         private void HandlePeerRegisterRequest(object sender, PacketEventArgs e)
         {
-            //Console.WriteLine("Got register request {0}", pkt);
+            log.InfoFormat("Got register request {0}", e.packet);
             Radio r = this.FindRadioByPacket(e.packet, e.ep);
             Packet resp = new PeerRegistrationReply(this.myID, this.type);
             if(r == null)
             {
-                //Console.WriteLine("Replying to unknown radio...");
+                log.Info("Replying to unknown radio...");
                 this.client.Send(resp, e.ep);
             }
             else
             {
-                //Console.WriteLine("Replying to known radio {0}", r);
+                log.InfoFormat("Replying to known radio {0}", r);
                 if(r.ID == null)
                 {
-                    //Console.WriteLine("Updating Radio ID {0}", e.packet.ID);
+                    log.InfoFormat("Updating Radio ID {0}", e.packet.ID);
                     r.ID = e.packet.ID;
                 }
                 r.SendPacket(resp);
@@ -351,17 +352,17 @@ namespace Moto.Net
 
         private void HandlePeerKeepAliveRequest(object sender, PacketEventArgs e)
         {
-            //Console.WriteLine("Got peer keep alive request {0}", pkt);
+            log.InfoFormat("Got peer keep alive request {0}", e.packet);
             Radio r = this.FindRadioByPacket(e.packet, e.ep);
             Packet resp = new PeerKeepAliveReply(this.myID, this.type);
             if (r == null)
             {
-                //Console.WriteLine("Replying to unknown radio...");
+                log.Info("Replying to unknown radio...");
                 this.client.Send(resp, e.ep);
             }
             else
             {
-                //Console.WriteLine("Replying to known radio {0}", r);
+                log.InfoFormat("Replying to known radio {0}", r);
                 r.SendPacket(resp);
             }
         }

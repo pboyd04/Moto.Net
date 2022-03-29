@@ -10,6 +10,7 @@ namespace Moto.Net.Mototrbo.LRRP
 {
     public class LRRPPacket
     {
+        private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
         protected LRRPPacketType type;
         protected UInt32 requestID;
         protected byte[] data;
@@ -92,11 +93,8 @@ namespace Moto.Net.Mototrbo.LRRP
                 }
             } catch(Exception ex)
             {
-                StreamWriter tw = File.AppendText("E:\\RadioCalls\\Exceptions.txt");
-                tw.WriteLine(BitConverter.ToString(data));
-                tw.WriteLine(ex);
-                tw.Close();
-                Console.WriteLine(ex);
+                log.Error("Unable to decode LRRP Packet", ex);
+                log.DebugFormat("Packet {0}", BitConverter.ToString(data));
                 return null;
             }
         }

@@ -9,6 +9,7 @@ namespace Moto.Net.Mototrbo.XNL.XCMP
 {
     public class XCMPClient : IDisposable
     {
+        private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
         protected XNLClient client;
         protected string version;
         protected bool ready;
@@ -65,15 +66,15 @@ namespace Moto.Net.Mototrbo.XNL.XCMP
 
         public RadioStatusReply GetRadioStatus(XCMPStatus statusType)
         {
-            //Console.WriteLine("Getting Radio Status {0}...", statusType);
+            log.DebugFormat("Getting Radio Status {0}...", statusType);
             RadioStatusRequest req = new RadioStatusRequest(statusType);
             this.SendPacket(req);
-            //Console.WriteLine("Sent Packet... {0}", BitConverter.ToString(req.Encode()));
+            log.DebugFormat("Sent Packet... {0}", BitConverter.ToString(req.Encode()));
             while (true)
             {
-                //Console.WriteLine("Waiting for Packet...");
+                log.DebugFormat("Waiting for Packet...");
                 XCMPPacket pkt = this.WaitForPacket();
-                //Console.WriteLine("Got Packet {0}", pkt);
+                log.DebugFormat("Got Packet {0}", pkt);
                 if (pkt.OpCode == XCMPOpCode.RadioStatusReply)
                 {
                     RadioStatusReply rsr = (RadioStatusReply)pkt;
@@ -151,15 +152,20 @@ namespace Moto.Net.Mototrbo.XNL.XCMP
                             status.Descriptor[XNLDevAttributes.DeviceFamily] = 0;
                             status.Descriptor[XNLDevAttributes.Display] = 0xFF;
                             DeviceInitStatusBroadcast send = new DeviceInitStatusBroadcast(disb.Version, XNLDevType.RadioControlStation, 0, status);
-                            //Console.WriteLine(BitConverter.ToString(send.Encode()));
                             this.SendPacket(send);
                         }
                         break;
                     case XCMPOpCode.RRCtrlBroadcast:
                         //Drop this type I don't know what it is right now, but don't see any reason to put it in the queue either
                         break;
+                    case XCMPOpCode.VersionInfoReply:
+                    case XCMPOpCode.RadioStatusReply:
+                    case XCMPOpCode.AlarmStatusReply:
+                        //These packets I know about and have logic to handle...
+                        this.receivedQueue.Add(xcmp);
+                        break;
                     default:
-                        //Console.WriteLine("Got Unknown XCMP Packet {0}", dp.XCMP);
+                        log.ErrorFormat("Got Unknown XCMP Packet {0}", dp.XCMP);
                         this.receivedQueue.Add(xcmp);
                         break;
                 }

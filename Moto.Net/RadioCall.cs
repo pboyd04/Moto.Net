@@ -12,6 +12,7 @@ namespace Moto.Net
 {
     public class RadioCall
     {
+        private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
         protected DateTime startTime;
         protected DateTime endTime;
         protected SortedList<UInt16, Burst> bursts;
@@ -127,7 +128,7 @@ namespace Moto.Net
                 List<byte> buffer = new List<byte>();
                 foreach (KeyValuePair<UInt16, Burst> pair in this.bursts)
                 {
-                    //Console.WriteLine("Burst sequence number is {0}", pair.Key);
+                    log.DebugFormat("Burst sequence number is {0}", pair.Key);
                     Burst b = pair.Value;
                     if (b.Type == DataType.DataHeader)
                     {
@@ -149,8 +150,8 @@ namespace Moto.Net
                     }
                     else
                     {
-                        //Console.WriteLine("Got packet {0}", b.Type);
-                        //Console.WriteLine("Got data {0}", BitConverter.ToString(b.Data));
+                        log.DebugFormat("Got packet {0}", b.Type);
+                        log.DebugFormat("Got data {0}", BitConverter.ToString(b.Data));
                     }
                     buffer.AddRange(b.Data);
                 }
@@ -192,7 +193,7 @@ namespace Moto.Net
         {
             if(upkt.GroupTag != this.groupTag)
             {
-                Console.WriteLine("Got packet with mismatching group tag! {0} != {1}", upkt.GroupTag, this.groupTag);
+                log.ErrorFormat("Got packet with mismatching group tag! {0} != {1}", upkt.GroupTag, this.groupTag);
             }
             this.bursts.Add(upkt.RTP.SequenceNumber, upkt.Burst);
             this.isEnded = upkt.End;
