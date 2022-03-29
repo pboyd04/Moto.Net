@@ -23,6 +23,11 @@ namespace Moto.Net.Mototrbo.XNL.XCMP
             this.data = data.Skip(2).ToArray();
         }
 
+        public override string ToString()
+        {
+            return base.ToString() + ": {OpCode: " + this.opcode.ToString("X") + ", Data: " + BitConverter.ToString(this.data) + "}";
+        }
+
         public static XCMPPacket Decode(byte[] data)
         {
             XCMPOpCode opcode = (XCMPOpCode)(data[0] << 8 | data[1]);

@@ -95,7 +95,12 @@ namespace Moto.Net
             {
                 if(this.xcmpClient != null)
                 {
-                    RadioStatusReply reply = this.xcmpClient.GetRadioStatus(XCMPStatus.SerialNumber);
+                    XCMPStatus status = XCMPStatus.SerialNumber;
+                    if(this.xcmpClient.isRepeater)
+                    {
+                        status = XCMPStatus.RepeaterSerialNumber;
+                    }
+                    RadioStatusReply reply = this.xcmpClient.GetRadioStatus(status);
                     return ASCIIEncoding.ASCII.GetString(reply.Data);
                 }
                 return "";
@@ -109,7 +114,8 @@ namespace Moto.Net
                 if (this.xcmpClient != null)
                 {
                     RadioStatusReply reply = this.xcmpClient.GetRadioStatus(XCMPStatus.ModelNumber);
-                    return ASCIIEncoding.ASCII.GetString(reply.Data);
+                    String ret = ASCIIEncoding.ASCII.GetString(reply.Data);
+                    return ret.TrimEnd(new char[] { '\0' });
                 }
                 return "";
             }
@@ -143,7 +149,10 @@ namespace Moto.Net
                 if(this.xcmpClient != null)
                 {
                     RadioStatusReply reply = this.xcmpClient.GetRadioStatus(XCMPStatus.RSSI);
-                    return new Tuple<float, float>(Mototrbo.Util.CalcRSSI(reply.Data, 0), Mototrbo.Util.CalcRSSI(reply.Data, 2));
+                    if (reply.Data.Length > 2)
+                    {
+                        return new Tuple<float, float>(Mototrbo.Util.CalcRSSI(reply.Data, 0), Mototrbo.Util.CalcRSSI(reply.Data, 2));
+                    }
                 }
                 return new Tuple<float, float>(-1, -1);
             }

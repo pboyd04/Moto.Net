@@ -13,6 +13,7 @@ namespace Moto.Net.Mototrbo.XNL.XCMP
         protected string version;
         protected bool ready;
         protected BlockingCollection<XCMPPacket> receivedQueue;
+        protected XNLDevType devType;
 
         public XCMPClient(XNLClient xnlclient)
         {
@@ -32,6 +33,14 @@ namespace Moto.Net.Mototrbo.XNL.XCMP
             get
             {
                 return this.version;
+            }
+        }
+
+        public bool isRepeater
+        {
+            get
+            {
+                return this.devType == XNLDevType.Repeater;
             }
         }
 
@@ -59,7 +68,7 @@ namespace Moto.Net.Mototrbo.XNL.XCMP
             //Console.WriteLine("Getting Radio Status {0}...", statusType);
             RadioStatusRequest req = new RadioStatusRequest(statusType);
             this.SendPacket(req);
-            //Console.WriteLine("Sent Packet...");
+            //Console.WriteLine("Sent Packet... {0}", BitConverter.ToString(req.Encode()));
             while (true)
             {
                 //Console.WriteLine("Waiting for Packet...");
@@ -127,10 +136,27 @@ namespace Moto.Net.Mototrbo.XNL.XCMP
                     case XCMPOpCode.DeviceinitStatusBroadcast:
                         DeviceInitStatusBroadcast disb = (DeviceInitStatusBroadcast)xcmp;
                         version = disb.Version;
+                        devType = disb.EntityType;
                         if(disb.InitComplete)
                         {
                             this.ready = true;
                         }
+                        else //if (disb.EntityType == XNLDevType.RadioControlStation)
+                        {
+                            //In this case I need to respond with my own details it seems...
+                            DeviceStatus status = new DeviceStatus();
+                            status.Status = 0;
+                            status.DeviceType = XNLDevType.IPPeripheral;
+                            status.Descriptor = new Dictionary<XNLDevAttributes, byte>();
+                            status.Descriptor[XNLDevAttributes.DeviceFamily] = 0;
+                            status.Descriptor[XNLDevAttributes.Display] = 0xFF;
+                            DeviceInitStatusBroadcast send = new DeviceInitStatusBroadcast(disb.Version, XNLDevType.RadioControlStation, 0, status);
+                            //Console.WriteLine(BitConverter.ToString(send.Encode()));
+                            this.SendPacket(send);
+                        }
+                        break;
+                    case XCMPOpCode.RRCtrlBroadcast:
+                        //Drop this type I don't know what it is right now, but don't see any reason to put it in the queue either
                         break;
                     default:
                         //Console.WriteLine("Got Unknown XCMP Packet {0}", dp.XCMP);

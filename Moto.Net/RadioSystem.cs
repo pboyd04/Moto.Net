@@ -316,6 +316,11 @@ namespace Moto.Net
                 IPRadio ir = (IPRadio)r;
                 return ir.Endpoint.Address;
             }
+            return GetSystemIPForRadio(id);
+        }
+
+        public IPAddress GetSystemIPForRadio(RadioID id)
+        {
             byte[] tmp = new byte[4];
             id.AddToArray(tmp, 0, 4);
             tmp[0] = 12;

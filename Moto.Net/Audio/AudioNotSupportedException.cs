@@ -8,5 +8,9 @@ namespace Moto.Net.Audio
 {
     public class AudioNotSupportedException : Exception
     {
+        public AudioNotSupportedException(String message, Exception innerException) : base(message, innerException)
+        {
+
+        }
     }
 }

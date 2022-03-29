@@ -17,14 +17,21 @@ namespace Moto.Net.Mototrbo.XNL
         {
         }
 
-        public DevConnectionRequestPacket(Address dest, Address src, Address connectionAddress, byte connectionType, byte connectionIndex, byte[] key) : base(OpCode.DeviceConnectionRequest)
+        public DevConnectionRequestPacket(Address dest, Address src, Address connectionAddress, byte connectionType, byte connectionIndex, byte[] key, bool repeater) : base(OpCode.DeviceConnectionRequest)
         {
             this.dest = dest;
             this.src = src;
             this.connection = connectionAddress;
             this.connectionType = connectionType;
             this.connectionIndex = connectionIndex;
-            this.key = Encrypter.Encrypt(key);
+            if (repeater)
+            {
+                this.key = Encrypter.Encrypt(key);
+            } 
+            else
+            {
+                this.key = Encrypter.EncryptControlStation(key);
+            }
             this.data = new byte[4+this.key.Length];
             this.connection.AddToArray(this.data, 0);
             this.data[2] = this.connectionType;

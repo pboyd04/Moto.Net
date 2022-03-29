@@ -62,6 +62,7 @@ namespace Moto.Net.Mototrbo
                 IPEndPoint RemoteIpEndPoint = new IPEndPoint(IPAddress.Any, 0);
                 Byte[] receiveBytes = this.rawClient.Receive(ref RemoteIpEndPoint);
                 Packet p = Packet.Decode(receiveBytes);
+                //Console.WriteLine("Recieved {0}", p.ToString());
                 PacketEventArgs e = new PacketEventArgs(p, RemoteIpEndPoint);
                 switch (p.PacketType)
                 {
@@ -145,9 +146,11 @@ namespace Moto.Net.Mototrbo
 
         public bool Send(Packet packet, IPEndPoint remotesystem)
         {
+            byte[] bytes;
+            int ret;
             //Console.WriteLine("Sending packet {0} to {1}", packet, remotesystem);
-            byte[] bytes = packet.Encode();
-            int ret = this.rawClient.Send(bytes, bytes.Length, remotesystem);
+            bytes = packet.Encode();
+            ret = this.rawClient.Send(bytes, bytes.Length, remotesystem);
             return (ret == bytes.Length);
         }
 

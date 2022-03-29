@@ -16,6 +16,8 @@ using Moto.Net.Mototrbo.LRRP;
 using PcapDotNet.Packets.IpV4;
 using Moto.Net.Mototrbo.TMS;
 using System.Text;
+using System.Reflection;
+using System.Text.Json;
 
 namespace MotoMond
 {
@@ -26,12 +28,18 @@ namespace MotoMond
         static RadioSystem sys;
         static LRRPClient lrrp;
         static TMSClient tms;
+        static Dictionary<string, string> modelMap;
 
         static void Main(string[] args)
         {
-            bool go = true;
-
             srv = new RPCServer();
+            //Grab out model lookup data
+            Stream s = Assembly.GetExecutingAssembly().GetManifestResourceStream("MotoMond.MototrboModels.json");
+            using(StreamReader reader = new StreamReader(s))
+            {
+                String jsonString = reader.ReadToEnd();
+                modelMap = JsonSerializer.Deserialize<Dictionary<String, String>>(jsonString);
+            }
 
             db = new Database(ConfigurationManager.AppSettings.Get("dbConnectionString"));
             if(!db.IsSetup)
@@ -58,77 +66,104 @@ namespace MotoMond
             srv.SetSystem(sys);
             sys.GotRadioCall += HandleUserCall;
             Radio master = sys.ConnectToMaster(masterIP, masterPort);
-            Console.WriteLine("Master ID = {0}", master.ID);
-            master.InitXNL();
-            Console.WriteLine("    XNL ID = {0}", master.XNLID);
-            Console.WriteLine("    XCMP Version = {0}", master.XCMPVersion);
-            string serialNum = master.SerialNumber;
-            string modelNum = master.ModelNumber;
-            string fwver = master.FirmwareVersion;
-            Console.WriteLine("    Serial Number = {0}", serialNum);
-            Console.WriteLine("    Model Number = {0}", modelNum);
-            Console.WriteLine("    Firmware Version = {0}", fwver);
-            Console.WriteLine("    Alarms:");
-            Dictionary<string, bool> alarms = master.GetAlarmStatus();
-            foreach(KeyValuePair<string, bool> kvp in alarms)
-            {
-                Console.WriteLine("        {0}: {1}", kvp.Key, kvp.Value);
-            }
-            string name = db.UpdateRepeater(master.ID, serialNum, modelNum, fwver);
-            sys.Master.Name = name;
-            Tuple<float, float> rssis = master.RSSI;
-            Console.WriteLine("    RSSI: {0} {1}", rssis.Item1, rssis.Item2);
-            db.WriteRSSI(master.ID, rssis);
+            ProcessRadio(master, "Master");
             Radio[] radios = sys.GetPeers();
             Console.WriteLine("Found {0} other radios...", radios.Length);
             foreach(Radio r in radios)
             {
                 PeerRadio pr = (PeerRadio)r;
                 pr.SendPeerRegistration();
-                Console.WriteLine("Peer ID = {0}", r.ID);
-                Console.WriteLine("    Peer IP = {0}", pr.Endpoint);
-                if(r.InitXNL() == false)
+                ProcessRadio(r, "Peer");
+            }
+            StartNoiseFloorCollector();
+            lrrp = new LRRPClient();
+            tms = new TMSClient();
+            sys.RegisterLRRPClient(lrrp);
+            sys.RegisterTMSClient(tms);
+            System.Net.NetworkInformation.NetworkInterface[] ifaces = System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces();
+            foreach(System.Net.NetworkInformation.NetworkInterface iface in ifaces)
+            {
+                if(iface.Description.Contains("MOTOTRBO Radio"))
+                {
+                    Console.WriteLine("Found potential control station on {0}", iface.Name);
+                    var ips = iface.GetIPProperties().GatewayAddresses;
+                    LocalRadio lr = new LocalRadio(sys, ips[0].Address);
+                    ProcessRadio(lr, "Control Station");
+                }
+            }
+            CommandProcessor cmd = new CommandProcessor(sys, lrrp, tms);
+            lrrp.GotLocationData += Lrrp_GotLocationData;
+            RunCli(cmd);
+            sys.Dispose();
+            lrrp.Dispose();
+            tms.Dispose();
+        }
+
+        private static void Lrrp_GotLocationData(object sender, LRRPPacketEventArgs e)
+        {
+            ImmediateLocationResponsePacket pkt = (ImmediateLocationResponsePacket)e.Packet;
+            db.WriteLocation(e.ID, pkt.Latitude, pkt.Longitude, e.Call?.RSSI);
+        }
+
+        private static void ProcessRadio(Radio r, string dispname)
+        {
+            if(r is PeerRadio)
+            {
+                PeerRadio pr = (PeerRadio)r;
+                if (r.InitXNL() == false)
                 {
                     Console.WriteLine("    Retrying peer init!");
                     pr.SendPeerRegistration();
                     r.InitXNL();
                 }
-                Console.WriteLine("    XNL ID = {0}", r.XNLID);
-                Console.WriteLine("    XCMP Version = {0}", r.XCMPVersion);
-                serialNum = r.SerialNumber;
-                modelNum = r.ModelNumber;
-                fwver = r.FirmwareVersion;
-                Console.WriteLine("    Serial Number = {0}", serialNum);
+            }
+            else
+            {
+                r.InitXNL();
+            }
+            //For control stations we don't know the ID until after XNL is initialized
+            Console.WriteLine(dispname + " ID = {0}", r.ID);
+            Console.WriteLine("    XNL ID = {0}", r.XNLID);
+            Console.WriteLine("    XCMP Version = {0}", r.XCMPVersion);
+            string fwver = r.FirmwareVersion;
+            Console.WriteLine("    Firmware Version = {0}", fwver);
+            string serialNum = r.SerialNumber;
+            Console.WriteLine("    Serial Number = {0}", serialNum);
+            string modelNum = r.ModelNumber;
+            if (modelMap.ContainsKey(modelNum))
+            {
+                Console.WriteLine("    Model Number = {0} ({1})", modelNum, modelMap[modelNum.Trim()]);
+            }
+            else
+            {
                 Console.WriteLine("    Model Number = {0}", modelNum);
-                Console.WriteLine("    Firmware Version = {0}", fwver);
-                Console.WriteLine("    Alarms:");
-                alarms = r.GetAlarmStatus();
-                foreach (KeyValuePair<string, bool> kvp in alarms)
-                {
-                    Console.WriteLine("        {0}: {1}", kvp.Key, kvp.Value);
-                }
-                name = db.UpdateRepeater(r.ID, serialNum, modelNum, fwver);
-                r.Name = name;
-                rssis = r.RSSI;
+            }
+            Console.WriteLine("    Alarms:");
+            Dictionary<string, bool> alarms = r.GetAlarmStatus();
+            foreach (KeyValuePair<string, bool> kvp in alarms)
+            {
+                Console.WriteLine("        {0}: {1}", kvp.Key, kvp.Value);
+            }
+            string name = db.UpdateRepeater(r.ID, serialNum, modelNum, fwver);
+            r.Name = name;
+            Tuple<float, float> rssis = r.RSSI;
+            if (!(r is LocalRadio))
+            {
+                //This isn't available for local radios
                 Console.WriteLine("    RSSI: {0} {1}", rssis.Item1, rssis.Item2);
                 db.WriteRSSI(r.ID, rssis);
             }
-            System.Timers.Timer t = new System.Timers.Timer(30000);
-            t.Elapsed += GetRSSI;
-            t.Enabled = true;
-            t.AutoReset = true;
-            lrrp = new LRRPClient();
-            tms = new TMSClient();
-            sys.RegisterLRRPClient(lrrp);
-            sys.RegisterTMSClient(tms);
-            CommandProcessor cmd = new CommandProcessor(sys, lrrp, tms);
+        }
 
+        private static void RunCli(CommandProcessor cmd)
+        {
+            bool go = true;
             while (go)
             {
                 Console.Write("cmd> ");
                 string cmdStr = Console.ReadLine();
                 string[] parts = cmdStr.Split(' ');
-                switch(parts[0])
+                switch (parts[0])
                 {
                     case "exit":
                         go = false;
@@ -138,32 +173,37 @@ namespace MotoMond
                         break;
                     default:
                         CommandResult res = cmd.ProcessCommand(parts[0], parts.Skip(1).ToArray());
-                        if(res.Success == false)
+                        StringBuilder sb = new StringBuilder();
+                        foreach (KeyValuePair<string, object> pair in res.Data)
+                        {
+                            sb.Append(pair.Key + ": " + pair.Value + ", ");
+                        }
+                        if (res.Success == false)
                         {
                             if (res.ex != null)
                             {
-                                Console.WriteLine("Command Failed! "+res.ex);
+                                Console.WriteLine("Command Failed! " + res.ex);
                             }
                             else
                             {
-                                Console.WriteLine("Command Failed!");
+                                Console.WriteLine("Command Failed! " + sb.ToString());
                             }
                         }
                         else
                         {
-                            StringBuilder sb = new StringBuilder();
-                            foreach(KeyValuePair<string, object> pair in res.Data)
-                            {
-                                sb.Append(pair.Key + ": " + pair.Value + ", ");
-                            }
-                            Console.WriteLine("Success! "+sb.ToString());
+                            Console.WriteLine("Success! " + sb.ToString());
                         }
                         break;
                 }
             }
-            sys.Dispose();
-            lrrp.Dispose();
-            tms.Dispose();
+        }
+
+        private static void StartNoiseFloorCollector()
+        {
+            System.Timers.Timer t = new System.Timers.Timer(30000);
+            t.Elapsed += GetRSSI;
+            t.Enabled = true;
+            t.AutoReset = true;
         }
 
         private static void GetRSSI(Object src, System.Timers.ElapsedEventArgs e)
@@ -238,6 +278,16 @@ namespace MotoMond
                         break;
                     case CallDataType.LRRP:
                         LRRPPacket pkt = dc.LRRPPacket;
+                        if(pkt == null)
+                        {
+                            Console.WriteLine("Failed to decode LRRP packet!");
+                            foreach(KeyValuePair<UInt16, Burst> pair in call.Bursts)
+                            {
+                                Console.WriteLine("Burst {0}", pair.Key);
+                                Console.WriteLine("    " + pair.Value);
+                            }
+                            return;
+                        }
                         if (pkt.Type == LRRPPacketType.ImmediateLocationResponse || pkt.Type == LRRPPacketType.TriggeredLocationData)
                         {
                             Console.WriteLine("Got LRRP Packet from {0} {1} {2}", call.From, pkt, rssiStr);
@@ -258,7 +308,17 @@ namespace MotoMond
                         break;
                     case CallDataType.UnknownSmall:
                     case CallDataType.IPAck:
+                    case CallDataType.TCPAck:
                         //Just ignore this
+                        break;
+                    case CallDataType.UnknownIP:
+                        Console.WriteLine("Got Unknown IP Traffic! {0} => {1}" + rssiStr, call.From, call.To);
+                        Console.WriteLine("    Source IP = {0} Dest IP = {1} Protocol {2}", ((DataCall)call).Datagram.Source, ((DataCall)call).Datagram.Destination, ((DataCall)call).Datagram.Protocol);
+                        Console.WriteLine("    Source Port = {0} Dest Port = {1}", ((DataCall)call).Datagram.Transport.SourcePort, ((DataCall)call).Datagram.Transport.DestinationPort);
+                        if(((DataCall)call).Datagram.Protocol == IpV4Protocol.Tcp)
+                        {
+                        }
+                        Console.WriteLine("    " + BitConverter.ToString(((DataCall)call).Datagram.Transport.Payload.ToArray()));
                         break;
                     default:
                         Console.WriteLine("Data Call Type is {0}", dc.DataType);

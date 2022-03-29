@@ -45,6 +45,8 @@ namespace Moto.Net.Mototrbo.XNL
                     return new DevAuthKeyReplyPacket(data);
                 case OpCode.DeviceConnectionReply:
                     return new DevConnectionReplyPacket(data);
+                case OpCode.DeviceSysMapBroadcast:
+                    return new DevSysMapBroadcastPacket(data);
                 default:
                     return new XNLPacket(data);
             }
@@ -52,7 +54,7 @@ namespace Moto.Net.Mototrbo.XNL
 
         public override string ToString()
         {
-            return base.ToString()+": {OpCode: "+this.opcode+", XCMP: "+this.isXCMP+", Flags: "+this.flags+", Dest: "+this.dest+", Src: "+this.src+", Transaction ID: "+this.transactionID+", Data: "+this.data+"}";
+            return base.ToString()+": {OpCode: "+this.opcode+", XCMP: "+this.isXCMP+", Flags: "+this.flags+", Dest: "+this.dest+", Src: "+this.src+", Transaction ID: "+this.transactionID+", Data: "+BitConverter.ToString(this.data)+"}";
         }
 
         public byte[] Encode()

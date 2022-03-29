@@ -28,20 +28,28 @@ namespace Moto.Net.Mototrbo.XNL
         protected RadioID id;
         protected Address masterID;
         protected Address xnlID;
+        protected bool tcpConnection;
         protected UInt16 transactionID;
         protected byte flags;
         protected Dictionary<UInt16, XNLPacket> pendingTransactions;
         protected bool initSuccess;
+        protected List<DevSysEntry> otherRadios;
 
         public event XNLPacketHandler GotDataPacket;
 
-        public XNLClient(Radio r, RadioID sysid)
+        public XNLClient(Radio r, RadioID sysid) : this(r, sysid, false)
+        {
+        }
+
+        public XNLClient(Radio r, RadioID sysId, bool tcp)
         {
             this.r = r;
-            this.id = sysid;
+            this.id = sysId;
             this.transactionID = 0;
             this.flags = 0;
+            this.tcpConnection = tcp;
             this.pendingTransactions = new Dictionary<ushort, XNLPacket>();
+            this.otherRadios = new List<DevSysEntry>();
 
             r.GotXNLXCMPPacket += new PacketHandler(this.HandleXNLPacket);
             this.initSuccess = this.Init();
@@ -54,7 +62,8 @@ namespace Moto.Net.Mototrbo.XNL
             switch (xnl.OpCode)
             {
                 case OpCode.DeviceSysMapBroadcast:
-                    //Ignore for now...
+                    //Check the sysmap to see what is there...
+                    this.ProcessSysMap((DevSysMapBroadcastPacket)xnl);
                     break;
                 case OpCode.MasterStatusBroadcast:
                     //Console.WriteLine("Got master status broadcast...");
@@ -88,8 +97,11 @@ namespace Moto.Net.Mototrbo.XNL
         private bool Init()
         {
             //Console.WriteLine("Initializing...");
-            XNLPacket initPkt = new InitPacket();
-            this.SendPacket(initPkt);
+            if (!(this.r is LocalRadio))
+            {
+                XNLPacket initPkt = new InitPacket();
+                this.SendPacket(initPkt);
+            }
             //Wait for broadcast packet
             int waitCount = 0;
             while(this.masterID == null)
@@ -120,8 +132,22 @@ namespace Moto.Net.Mototrbo.XNL
         private void StartConnection(DevAuthKeyReplyPacket pkt)
         {
             //Console.WriteLine("Sending connection request {0}...", pkt.TempID);
-            XNLPacket newPkt = new DevConnectionRequestPacket(this.masterID, pkt.TempID, new Address(0), 0x0A, 0x01, pkt.AuthKey);
+            XNLPacket newPkt = new DevConnectionRequestPacket(this.masterID, pkt.TempID, new Address(0), 0x0A, 0x01, pkt.AuthKey, (this.r is MasterRadio));
             this.SendPacket(newPkt);
+        }
+
+        private void ProcessSysMap(DevSysMapBroadcastPacket pkt)
+        {
+            foreach(DevSysEntry dev in pkt.Entries)
+            {
+                if(dev.XNLAddress.Equals(this.xnlID) || dev.XNLAddress.Equals(this.masterID))
+                {
+                    //This is me or the already connected master, skip it...
+                    continue;
+                }
+                //Console.WriteLine("Adding Radio... {0}", dev);
+                this.otherRadios.Add(dev);
+            }
         }
 
         private void AckPacket(XNLPacket pkt)
@@ -149,6 +175,30 @@ namespace Moto.Net.Mototrbo.XNL
             r.SendPacket(pkt);
         }
 
+        public void SendPacket(XNLPacket xnl, bool overridSrcAndDest)
+        {
+            if (xnl.OpCode == OpCode.DataMessage)
+            {
+                if (overridSrcAndDest == true)
+                {
+                    xnl.Source = this.xnlID;
+                    xnl.Destination = this.masterID;
+                }
+                xnl.TransactionID = this.transactionID++;
+                xnl.Flags = this.flags++;
+                if (this.flags > 0x07)
+                {
+                    this.flags = 0;
+                }
+                this.pendingTransactions[xnl.TransactionID] = xnl;
+                System.Timers.Timer t = new System.Timers.Timer(5000);
+                t.Elapsed += (sender, e) => this.ResendPacket(sender, e, xnl.TransactionID);
+            }
+            XNLXCMPPacket pkt = new XNLXCMPPacket(this.id, xnl);
+            Console.WriteLine("Sending {0} to {1}", pkt, xnl.Destination);
+            r.SendPacket(pkt);
+        }
+
         private void ResendPacket(object src, ElapsedEventArgs e, UInt16 transactionID)
         {
             if(this.pendingTransactions.ContainsKey(transactionID))
@@ -163,6 +213,14 @@ namespace Moto.Net.Mototrbo.XNL
             get
             {
                 return this.masterID;
+            }
+        }
+
+        public Address XNLID
+        {
+            get
+            {
+                return this.xnlID;
             }
         }
 

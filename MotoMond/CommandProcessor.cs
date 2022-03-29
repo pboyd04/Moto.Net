@@ -54,6 +54,10 @@ namespace MotoMond
                     return GetRadio(args);
                 case "locate":
                     return RadioLocate(args);
+                case "startlocate":
+                    return RadioStartLocate(args);
+                case "stoplocate":
+                    return RadioStopLocate(args);
                 case "text":
                     return RadioText(args);
                 default:
@@ -145,6 +149,59 @@ namespace MotoMond
                 res.Data["latitude"] = ret.Item1;
                 res.Data["longitude"] = ret.Item2;
             }
+            return res;
+        }
+
+        private CommandResult RadioStartLocate(string[] args)
+        {
+            CommandResult res = new CommandResult();
+            if (args.Length < 1)
+            {
+                res.Success = false;
+                res.ex = new ArgumentException("Missing required argument radio ID!");
+                return res;
+            }
+            if (args.Length < 2)
+            {
+                res.Success = false;
+                res.ex = new ArgumentException("Missing required argument request id!");
+                return res;
+            }
+            if (args.Length < 3)
+            {
+                res.Success = false;
+                res.ex = new ArgumentException("Missing required argument period!");
+                return res;
+            }
+            uint id = uint.Parse(args[0]);
+            uint reqid = uint.Parse(args[1]);
+            uint period = uint.Parse(args[2]);
+            int ret = lrrp.StartTriggeredLocate(new RadioID(id), sys, reqid, period);
+            res.Success = (ret == 0);
+            res.Data["rc"] = (LRRPResponseCodes)ret;
+            return res;
+        }
+
+        private CommandResult RadioStopLocate(string[] args)
+        {
+            CommandResult res = new CommandResult();
+            if (args.Length < 1)
+            {
+                res.Success = false;
+                res.ex = new ArgumentException("Missing required argument radio ID!");
+                return res;
+            }
+            if (args.Length < 2)
+            {
+                res.Success = false;
+                res.ex = new ArgumentException("Missing required argument request id!");
+                return res;
+            }
+            uint id = uint.Parse(args[0]);
+            uint reqid = uint.Parse(args[1]);
+            int ret = lrrp.StopTriggeredLocate(new RadioID(id), sys, reqid);
+            res.Success = (ret == 0);
+            res.Data["rc"] = (LRRPResponseCodes)ret;
             return res;
         }
 
