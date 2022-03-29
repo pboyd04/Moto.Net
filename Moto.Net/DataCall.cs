@@ -19,7 +19,8 @@ namespace Moto.Net
         ICMP,
         TMS,
         LRRP,
-        IPAck
+        IPAck,
+        TCPAck
     }
 
     public class DataCall : RadioCall
@@ -55,9 +56,9 @@ namespace Moto.Net
             for (int i = 0; i < numberOfPreambles; i++)
             {
                 Preamble pre = new Preamble((byte)(numberOfPreambles - i), to, from);
-                call.bursts.Add(pre);
+                call.bursts.Add((UInt16)i, pre);
             }
-            call.bursts.Add(burst);
+            call.bursts.Add((UInt16)numberOfPreambles, burst);
             return call;
         }
 
@@ -66,7 +67,7 @@ namespace Moto.Net
             get
             {
                 CallDataType ret = CallDataType.Unknown;
-                foreach (Burst b in bursts)
+                foreach (Burst b in bursts.Values)
                 {
                     if(b.Type == Mototrbo.Bursts.DataType.CSBK)
                     {
@@ -97,9 +98,9 @@ namespace Moto.Net
                 }
                 if(this.Data == null || this.Data.Length == 0)
                 {
-                    if(this.bursts[0].Type == Mototrbo.Bursts.DataType.DataHeader)
+                    if(this.bursts.Values[0].Type == Mototrbo.Bursts.DataType.DataHeader)
                     {
-                        DataHeader dh = (DataHeader)this.bursts[0];
+                        DataHeader dh = (DataHeader)this.bursts.Values[0];
                         if(dh.HeaderType == 1)
                         {
                             return CallDataType.IPAck;
@@ -109,17 +110,22 @@ namespace Moto.Net
                 }
                 if(ret == CallDataType.UnknownCSBK)
                 {
-                    CSBKBurst cb = (CSBKBurst)bursts[0];
+                    CSBKBurst cb = (CSBKBurst)bursts.Values[0];
                     if(cb.CSBKOpCode == CSBKOpCode.MototrboRadioCheck)
                     {
-                        if(((Moto.Net.Mototrbo.Bursts.CSBK.RadioCheck)this.bursts[0]).IsAck)
+                        if(((Moto.Net.Mototrbo.Bursts.CSBK.RadioCheck)this.bursts.Values[0]).IsAck)
                         {
                             return CallDataType.RadioCheckAck;
                         }
                         return CallDataType.RadioCheck;
                     }
-                    foreach (Burst b in bursts)
+                    foreach (Burst b in bursts.Values)
                     {
+                        if(b.Type != Mototrbo.Bursts.DataType.CSBK)
+                        {
+                            Console.WriteLine("Got non-CSBK burst in CSBK data call? {0}", b);
+                            continue;
+                        }
                         cb = (CSBKBurst)b;
                         Console.WriteLine("OpCode = "+cb.CSBKOpCode+", Feature ID = "+cb.FeatureID+", Data = "+BitConverter.ToString(cb.Data));
                     }
@@ -130,8 +136,20 @@ namespace Moto.Net
                     {
                         return CallDataType.ICMP;
                     }
+                    if(this.Datagram.Protocol == PcapDotNet.Packets.IpV4.IpV4Protocol.Tcp)
+                    {
+                        PcapDotNet.Packets.Transport.TcpDatagram td = this.Datagram.Tcp;
+                        if (td.IsAcknowledgment)
+                        {
+                            return CallDataType.TCPAck;
+                        }
+                    }
                     else if(this.Datagram.Protocol == PcapDotNet.Packets.IpV4.IpV4Protocol.Udp)
                     {
+                        if(this.UDPDatagram == null)
+                        {
+                            return CallDataType.UnknownIP;
+                        }
                         if(this.UDPDatagram.DestinationPort == 4001)
                         {
                             return CallDataType.LRRP;
