@@ -18,6 +18,11 @@ namespace Moto.Net.Mototrbo.LRRP
 
         }
 
+        public TriggeredLocationStopRequestPacket(uint requestID) : this()
+        {
+            this.RequestID = requestID;
+        }
+
         public override byte[] Encode()
         {
             this.data = new byte[0];

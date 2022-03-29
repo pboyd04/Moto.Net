@@ -76,16 +76,22 @@ namespace Moto.Net.Mototrbo.LRRP
                 LRRPPacket p = LRRPPacket.Decode(receiveBytes);
                 //Console.WriteLine("Got LRRP Packet {0}", p);
                 LRRPPacketEventArgs e = new LRRPPacketEventArgs(p, RemoteIpEndPoint);
+                bool handled = false;
                 foreach(LRRPPacketEventArgs x in this.recentlyHandled)
                 {
-                    if(e.Endpoint.Address.Equals(x.Endpoint.Address))
+                    if (e.Endpoint.Address.Equals(x.Endpoint.Address))
                     {
-                        if(e.Packet.Type == x.Packet.Type && e.Packet.RequestID == x.Packet.RequestID)
+                        if (e.Packet.Type == x.Packet.Type && e.Packet.RequestID == x.Packet.RequestID)
                         {
                             //Drop this it was already handled from the repeater...
-                            continue;
+                            handled = true;
+                            break;
                         }
                     }
+                }
+                if(handled)
+                {
+                    continue;
                 }
                 if(this.deboune)
                 {
@@ -98,6 +104,7 @@ namespace Moto.Net.Mototrbo.LRRP
                     t.Elapsed += new System.Timers.ElapsedEventHandler((sender, evt) => {
                         ReallySendEvent(e);
                     });
+                    t.AutoReset = false;
                     t.Start();
                 }
                 else
@@ -109,6 +116,11 @@ namespace Moto.Net.Mototrbo.LRRP
 
         private bool ReallySendEvent(LRRPPacketEventArgs e)
         {
+            if(e.Packet == null)
+            {
+                //Couldn't decode the packet...
+                return false;
+            }
             switch (e.Packet.Type)
             {
                 case LRRPPacketType.ImmediateLocationResponse:
@@ -206,6 +218,67 @@ namespace Moto.Net.Mototrbo.LRRP
         {
             IPAddress ip = sys.GetIPForRadio(id);
             return this.GetCurrentLocation(ip.ToString());
+        }
+
+        public int StartTriggeredLocate(string ipAddress, uint requestID, uint period)
+        {
+            TriggeredLocationStartRequestPacket pkt = new TriggeredLocationStartRequestPacket(requestID);
+            pkt.TriggerPeriodically = (int)period;
+            IPEndPoint ep = new IPEndPoint(IPAddress.Parse(ipAddress), 4001);
+            SemaphoreSlim signal = new SemaphoreSlim(0, 1);
+            int resp = -1;
+            LRRPPacketHandler handler = new LRRPPacketHandler((sender, e) => {
+                if (e.Packet.Type == LRRPPacketType.TriggeredLocationStartResponse && e.Endpoint.Equals(ep))
+                {
+                    resp = ((TriggeredLocationStartResponsePacket)e.Packet).ResponseCode;
+                    signal.Release();
+                }
+            });
+            this.GotLRRPControl += handler;
+            this.Send(pkt, ep);
+            if (signal.Wait(5000) == false)
+            {
+                this.GotLRRPControl -= handler;
+                return -1;
+            }
+            this.GotLRRPControl -= handler;
+            return resp;
+        }
+
+        public int StartTriggeredLocate(RadioID id, RadioSystem sys, uint requestID, uint period)
+        {
+            IPAddress ip = sys.GetIPForRadio(id);
+            return this.StartTriggeredLocate(ip.ToString(), requestID, period);
+        }
+
+        public int StopTriggeredLocate(string ipAddress, uint requestID)
+        {
+            TriggeredLocationStopRequestPacket pkt = new TriggeredLocationStopRequestPacket(requestID);
+            IPEndPoint ep = new IPEndPoint(IPAddress.Parse(ipAddress), 4001);
+            SemaphoreSlim signal = new SemaphoreSlim(0, 1);
+            int resp = -1;
+            LRRPPacketHandler handler = new LRRPPacketHandler((sender, e) => {
+                if (e.Packet.Type == LRRPPacketType.TriggeredLocationStopResponse && e.Endpoint.Equals(ep))
+                {
+                    resp = ((TriggeredLocatonStopResponsePacket)e.Packet).ResponseCode;
+                    signal.Release();
+                }
+            });
+            this.GotLRRPControl += handler;
+            this.Send(pkt, ep);
+            if (signal.Wait(5000) == false)
+            {
+                this.GotLRRPControl -= handler;
+                return -1;
+            }
+            this.GotLRRPControl -= handler;
+            return resp;
+        }
+
+        public int StopTriggeredLocate(RadioID id, RadioSystem sys, uint requestID)
+        {
+            IPAddress ip = sys.GetIPForRadio(id);
+            return this.StopTriggeredLocate(ip.ToString(), requestID);
         }
 
         public bool RetainRecentlySent

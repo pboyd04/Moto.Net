@@ -18,6 +18,11 @@ namespace Moto.Net.Mototrbo.LRRP
 
         }
 
+        public TriggeredLocationStartRequestPacket(uint requestID) : this()
+        {
+            this.RequestID = requestID;
+        }
+
         public int TriggerPeriodically
         {
             get

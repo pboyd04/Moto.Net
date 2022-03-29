@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Runtime;
 using System.Text;
@@ -20,15 +21,16 @@ namespace Moto.Net.Mototrbo.LRRP
 
         public LRRPPacket(byte[] data)
         {
-            this.type = (LRRPPacketType)data[0];
+            //I'm not sure what it means when the 0x80 bit is set... just ignore it till I figure it out.
+            this.type = (LRRPPacketType)(data[0] & 0x7F);
             //data[1] is the packet size...
             //This next bit seems to be a TLV, not sure what other tags are valid...
             if (data[2] != 0x22)
             {
-                throw new NotImplementedException(string.Format("Unknown tag byte {0}", data[2]));
+                throw new NotImplementedException(string.Format("Unknown tag byte {0} ({1})", data[2], BitConverter.ToString(data)));
             }
             int offset;
-            switch (data[3])
+            switch (data[3] & 0x0F)
             {
                 case 1:
                     this.requestID = data[4];
@@ -65,26 +67,37 @@ namespace Moto.Net.Mototrbo.LRRP
 
         public static LRRPPacket Decode(byte[] data)
         {
-            switch((LRRPPacketType)(data[0]))
+            try
             {
-                case LRRPPacketType.ImmediateLocationRequest:
-                    return new ImmediateLocationRequestPacket(data);
-                case LRRPPacketType.ImmediateLocationResponse:
-                    return new ImmediateLocationResponsePacket(data);
-                case LRRPPacketType.ProtocolVersionRequest:
-                    return new VersionRequestPacket(data);
-                case LRRPPacketType.ProtocolVersionResponse:
-                    return new VersionResponsePacket(data);
-                case LRRPPacketType.TriggeredLocationData:
-                    return new TriggeredLocationPacket(data);
-                case LRRPPacketType.TriggeredLocationStartRequest:
-                    return new TriggeredLocationStartRequestPacket(data);
-                case LRRPPacketType.TriggeredLocationStartResponse:
-                    return new TriggeredLocationStartResponsePacket(data);
-                case LRRPPacketType.TriggeredLocationStopResponse:
-                    return new TriggeredLocatonStopResponsePacket(data);
-                default:
-                    return new LRRPPacket(data);
+                switch ((LRRPPacketType)(data[0] & 0x7F))
+                {
+                    case LRRPPacketType.ImmediateLocationRequest:
+                        return new ImmediateLocationRequestPacket(data);
+                    case LRRPPacketType.ImmediateLocationResponse:
+                        return new ImmediateLocationResponsePacket(data);
+                    case LRRPPacketType.ProtocolVersionRequest:
+                        return new VersionRequestPacket(data);
+                    case LRRPPacketType.ProtocolVersionResponse:
+                        return new VersionResponsePacket(data);
+                    case LRRPPacketType.TriggeredLocationData:
+                        return new TriggeredLocationPacket(data);
+                    case LRRPPacketType.TriggeredLocationStartRequest:
+                        return new TriggeredLocationStartRequestPacket(data);
+                    case LRRPPacketType.TriggeredLocationStartResponse:
+                        return new TriggeredLocationStartResponsePacket(data);
+                    case LRRPPacketType.TriggeredLocationStopResponse:
+                        return new TriggeredLocatonStopResponsePacket(data);
+                    default:
+                        return new LRRPPacket(data);
+                }
+            } catch(Exception ex)
+            {
+                StreamWriter tw = File.AppendText("E:\\RadioCalls\\Exceptions.txt");
+                tw.WriteLine(BitConverter.ToString(data));
+                tw.WriteLine(ex);
+                tw.Close();
+                Console.WriteLine(ex);
+                return null;
             }
         }
 
@@ -93,7 +106,7 @@ namespace Moto.Net.Mototrbo.LRRP
             int reqLength = 4;
             if(this.requestID <= 0xFFFFFF)
             {
-                reqLength = 3;
+                //reqLength = 3;
             }
             byte[] ret = new byte[this.data.Length + 4 + reqLength];
             ret[0] = (byte)this.type;
