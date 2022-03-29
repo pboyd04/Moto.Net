@@ -12,10 +12,12 @@ namespace MotoMond
 {
     public class Database
     {
+        protected string connStr;
         protected MySqlConnection conn;
 
         public Database(string connStr)
         {
+            this.connStr = connStr;
             this.conn = new MySqlConnection(connStr);
             this.conn.Open();
         }
@@ -145,6 +147,22 @@ namespace MotoMond
             cmd.Parameters.AddWithValue("@rssi2", rssis.Item2);
             cmd.Prepare();
             cmd.ExecuteNonQuery();
+        }
+
+        public void WriteLocation(RadioID id, float lat, float lon, float? rssi)
+        {
+            string sql = "INSERT INTO location(radioid, latitude, longitude, rssi, timestamp) VALUES (@id, @lat, @long, @rssi, NOW());";
+            using(var myConn = new MySqlConnection(this.connStr))
+            using (var cmd = new MySqlCommand(sql, myConn))
+            {
+                myConn.Open();
+                cmd.Parameters.AddWithValue("@id", id.Int);
+                cmd.Parameters.AddWithValue("@lat", lat);
+                cmd.Parameters.AddWithValue("@long", lon);
+                cmd.Parameters.AddWithValue("@rssi", rssi);
+                cmd.Prepare();
+                cmd.ExecuteNonQuery();
+            }
         }
     }
 }
