@@ -9,11 +9,13 @@ namespace Moto.Net.Mototrbo.XNL.XCMP
     public enum XCMPOpCode
     {
         DeviceinitStatusBroadcast = 0xB400,
-        RRCtrlBroadcast = 0xB41C, 
         RadioStatusRequest = 0x000E,
         RadioStatusReply = 0x800E,
         VersionInfoRequest = 0x000F,
         VersionInfoReply = 0x800F,
+        ChannelSelectRequest = 0x040D,
+        ChannelSelectReply = 0x840D,
+        RRCtrlBroadcast = 0xB41C,
         AlarmStatusRequest = 0x042E,
         AlarmStatusReply = 0x842E
     }

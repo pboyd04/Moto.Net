@@ -172,6 +172,8 @@
     <Compile Include="Mototrbo\TMS\TMSClient.cs" />
     <Compile Include="Mototrbo\TCPClient.cs" />
     <Compile Include="Mototrbo\XNL\DevSysMapBroadcastPacket.cs" />
+    <Compile Include="Mototrbo\XNL\XCMP\ChannelSelectRequest.cs" />
+    <Compile Include="Mototrbo\XNL\XCMP\ChannelSelectReply.cs" />
     <Compile Include="Mototrbo\XNL\XNLDevType.cs" />
     <Compile Include="Mototrbo\XNL\XNLNotSupportedException.cs" />
     <Compile Include="PeerRadio.cs" />

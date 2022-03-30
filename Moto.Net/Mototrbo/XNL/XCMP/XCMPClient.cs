@@ -129,6 +129,24 @@ namespace Moto.Net.Mototrbo.XNL.XCMP
             }
         }
 
+        public ChannelSelectReply GetChannelSelect(ChannelSelectFunction function, UInt16 zone)
+        {
+            XCMPPacket req = new ChannelSelectRequest(function, zone, 1);
+            this.SendPacket(req);
+            while (true)
+            {
+                XCMPPacket pkt = this.WaitForPacket();
+                if (pkt.OpCode == XCMPOpCode.ChannelSelectReply)
+                {
+                    ChannelSelectReply r = (ChannelSelectReply)pkt;
+                    return r;
+                }
+                //Requeue this packet it wasn't for us...
+                this.receivedQueue.Add(pkt);
+                //TODO Timeout
+            }
+        }
+
         private void HandleXNLDataPacket(object sender, XNLEventArgs e)
         {
             XNLPacket pkt = e.Packet;
@@ -165,6 +183,7 @@ namespace Moto.Net.Mototrbo.XNL.XCMP
                     case XCMPOpCode.VersionInfoReply:
                     case XCMPOpCode.RadioStatusReply:
                     case XCMPOpCode.AlarmStatusReply:
+                    case XCMPOpCode.ChannelSelectReply:
                         //These packets I know about and have logic to handle...
                         this.receivedQueue.Add(xcmp);
                         break;

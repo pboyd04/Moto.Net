@@ -46,13 +46,15 @@ namespace MotoMond
         protected TMSClient tms;
         protected Dictionary<string, CMD> Commands;
         protected Dictionary<RadioID, IPAddress> radios;
+        protected Database db;
 
-        public CommandProcessor(RadioSystem sys, LRRPClient lrrp, TMSClient tms, Dictionary<RadioID, IPAddress> controlStations)
+        public CommandProcessor(RadioSystem sys, LRRPClient lrrp, TMSClient tms, Dictionary<RadioID, IPAddress> controlStations, Database db)
         {
             this.sys = sys;
             this.lrrp = lrrp;
             this.tms = tms;
             this.radios = controlStations;
+            this.db = db;
             this.Commands = new Dictionary<string, CMD>()
             {
                 {"check", new CMD("Sends a radio check to a radio", this.RadioCheck, false) },
@@ -276,7 +278,14 @@ namespace MotoMond
             {
                 source = args[1];
             }
-            //TODO implement
+            if(source.Equals("db"))
+            {
+                res.Data["radios"] = this.db.ReadRadios();
+            }
+            else
+            {
+                //TODO implement
+            }
             res.Success = true;
             return res;
         }

@@ -96,7 +96,7 @@ namespace MotoMond
                     }
                 }
             }
-            CommandProcessor cmd = new CommandProcessor(sys, lrrp, tms, controlStations);
+            CommandProcessor cmd = new CommandProcessor(sys, lrrp, tms, controlStations, db);
             lrrp.GotLocationData += Lrrp_GotLocationData;
             RunCli(cmd);
             sys.Dispose();
@@ -158,6 +158,13 @@ namespace MotoMond
                 Console.WriteLine("    RSSI: {0} {1}", rssis.Item1, rssis.Item2);
                 db.WriteRSSI(r.ID, rssis);
             }
+            int zoneCount = r.ZoneCount;
+            Console.WriteLine("    Zone Count = {0}", zoneCount);
+            for(int i = 0; i < zoneCount; i++)
+            {
+                int channelCount = r.GetChannelCountForZone((UInt16)(i + 1));
+                Console.WriteLine("        Zone[{0}] Channel Count = {1}", i+1, channelCount);
+            }
         }
 
         private static void RunCli(CommandProcessor cmd)
@@ -181,7 +188,19 @@ namespace MotoMond
                         StringBuilder sb = new StringBuilder();
                         foreach (KeyValuePair<string, object> pair in res.Data)
                         {
-                            sb.Append(pair.Key + ": " + pair.Value + ", ");
+                            var value = pair.Value;
+                            if(value is System.Collections.IEnumerable)
+                            {
+                                //For some reason join doesn't work here...
+                                StringBuilder sb2 = new StringBuilder();
+                                foreach(var item in ((System.Collections.IEnumerable)value))
+                                {
+                                    sb2.Append(item.ToString());
+                                    sb2.Append("\n");
+                                }
+                                value = sb2.ToString();
+                            }
+                            sb.Append(pair.Key + ": " + value + ", ");
                         }
                         if (res.Success == false)
                         {

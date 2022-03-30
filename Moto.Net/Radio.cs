@@ -167,6 +167,19 @@ namespace Moto.Net
             }
         }
 
+        public UInt16 ZoneCount
+        {
+            get
+            {
+                if (this.xcmpClient != null)
+                {
+                    ChannelSelectReply reply = this.xcmpClient.GetChannelSelect(ChannelSelectFunction.GetZoneCount, 1);
+                    return reply.Zone;
+                }
+                return 0;
+            }
+        }
+
         public Dictionary<string, bool> GetAlarmStatus()
         {
             Dictionary<string, bool> ret = new Dictionary<string, bool>();
@@ -180,6 +193,16 @@ namespace Moto.Net
                 }
             }
             return ret;
+        }
+
+        public UInt16 GetChannelCountForZone(UInt16 zoneId)
+        {
+            if(this.xcmpClient != null)
+            {
+                ChannelSelectReply reply = this.xcmpClient.GetChannelSelect(ChannelSelectFunction.GetChannelCount, zoneId);
+                return reply.Channel;
+            }
+            return 0;
         }
 
         public byte[] GetRadioStatus(XCMPStatus status)

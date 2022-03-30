@@ -99,6 +99,39 @@ namespace MotoMond
             return (string)test;
         }
 
+        public List<DBRadio> ReadRadios()
+        {
+            List<DBRadio> ret = new List<DBRadio>();
+            MySqlCommand cmd = new MySqlCommand("SELECT * from repeaters;", this.conn);
+            cmd.Prepare();
+            using (MySqlDataReader reader = cmd.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    ret.Add(new DBRadio(reader, "repeaters"));
+                }
+            }
+            cmd = new MySqlCommand("SELECT * from radio;", this.conn);
+            cmd.Prepare();
+            using (MySqlDataReader reader = cmd.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    DBRadio r = new DBRadio(reader, "radio");
+                    DBRadio old = ret.Find(i => i.RadioId == r.RadioId);
+                    if (old == null)
+                    {
+                        ret.Add(r);
+                    }
+                    else
+                    {
+                        old.AddValues(r);
+                    }
+                }
+            }
+            return ret;
+        }
+
         public void WriteVoiceCall(RadioID from, RadioID to, DateTime start, DateTime end, float rssi, int slot, string filename)
         {
             string sql = "INSERT INTO voicecalls(source, dest, start, end, rssi, slot, recordingpath) VALUES (@src, @dest, @start, @end, @rssi, @slot, @path);";
