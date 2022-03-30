@@ -22,5 +22,9 @@ jobs:
     # Add  MSBuild to the PATH: https://github.com/microsoft/setup-msbuild
     - name: Setup MSBuild.exe
       uses: microsoft/setup-msbuild@v1.0.2
+    - name: Setup NuGet
+      uses: NuGet/setup-nuget@v1.0.5
+    - name: Restore Packages
+      run: nuget restore $env:Solution_Name
     - name: Build
       run: msbuild $env:Solution_Name /p:platform="Any CPU" /p:configuration="${{ matrix.configuration }}"
