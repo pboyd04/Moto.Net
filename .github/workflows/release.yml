@@ -1,0 +1,38 @@
+name: Release
+
+on:
+  release:
+    types: [ created ]
+jobs:
+  build:
+    strategy:
+      matrix:
+        configuration: [Debug, Release]
+    runs-on: windows-latest  
+    env:
+      Solution_Name: Moto.Net.sln
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+    # Add  MSBuild to the PATH: https://github.com/microsoft/setup-msbuild
+    - name: Setup MSBuild.exe
+      uses: microsoft/setup-msbuild@v1.0.2
+    - name: Setup NuGet
+      uses: NuGet/setup-nuget@v1.0.5
+    - name: Restore Packages
+      run: nuget restore $env:Solution_Name
+    - name: Use NoXNL app.config with default settings
+      run: copy .\MotoMond\App.config.noxnl .\MotoMond\App.config
+    - name: Build
+      run: msbuild $env:Solution_Name /p:platform="Any CPU" /p:configuration="${{ matrix.configuration }}"
+    - name: Create Zip
+      uses: papeloto/action-zip@v1
+      with:
+        files: .\MotoMond\bin\${{ matrix.configuration }}
+        dest: MotoMond_${{ matrix.configuration }}.zip
+    - name: Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: MotoMond_${{ matrix.configuration }}.zip
