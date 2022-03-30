@@ -1,0 +1,45 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+  <appSettings>
+    <add key="dbConnectionString" value="server=localhost;userid=root;password=admin;database=radios" />
+    <add key="systemId" value="65000" />
+    <add key="systemType" value="CapacityPlus" />
+    <!-- 
+    Create these values if you want to use the built in XNL encrypting
+    <add key="XNLConst1" value="0" />
+    <add key="XNLConst2" value="0" />
+    <add key="XNLConst3" value="0" />
+    <add key="XNLConst4" value="0" />
+    <add key="XNLConst5" value="0" />
+    <add key="XNLConst6" value="0" />
+    <add key="XNLControlConst1" value="0" />
+    <add key="XNLControlConst2" value="0" />
+    <add key="XNLControlConst3" value="0" />
+    <add key="XNLControlConst4" value="0" />
+    <add key="XNLControlConst5" value="0" />
+    <add key="XNLControlConst6" value="0" />-->
+  </appSettings>
+    <startup> 
+        <supportedRuntime version="v4.0" sku=".NETFramework,Version=v4.7.2" />
+    </startup>
+  <runtime>
+    <assemblyBinding xmlns="urn:schemas-microsoft-com:asm.v1">
+      <dependentAssembly>
+        <assemblyIdentity name="System.Runtime.CompilerServices.Unsafe" publicKeyToken="b03f5f7f11d50a3a" culture="neutral" />
+        <bindingRedirect oldVersion="0.0.0.0-4.0.6.0" newVersion="4.0.6.0" />
+      </dependentAssembly>
+      <dependentAssembly>
+        <assemblyIdentity name="System.Buffers" publicKeyToken="cc7b13ffcd2ddd51" culture="neutral" />
+        <bindingRedirect oldVersion="0.0.0.0-4.0.3.0" newVersion="4.0.3.0" />
+      </dependentAssembly>
+      <dependentAssembly>
+        <assemblyIdentity name="System.Threading.Tasks.Extensions" publicKeyToken="cc7b13ffcd2ddd51" culture="neutral" />
+        <bindingRedirect oldVersion="0.0.0.0-4.2.0.1" newVersion="4.2.0.1" />
+      </dependentAssembly>
+      <dependentAssembly>
+        <assemblyIdentity name="System.ValueTuple" publicKeyToken="cc7b13ffcd2ddd51" culture="neutral" />
+        <bindingRedirect oldVersion="0.0.0.0-4.0.3.0" newVersion="4.0.3.0" />
+      </dependentAssembly>
+    </assemblyBinding>
+  </runtime>
+</configuration>

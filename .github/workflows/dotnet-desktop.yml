@@ -26,5 +26,7 @@ jobs:
       uses: NuGet/setup-nuget@v1.0.5
     - name: Restore Packages
       run: nuget restore $env:Solution_Name
+    - name: Use NoXNL app.config with default settings
+      run: copy .\MotoMond\App.config.noxnl .\MotoMond\App.config
     - name: Build
       run: msbuild $env:Solution_Name /p:platform="Any CPU" /p:configuration="${{ matrix.configuration }}"
