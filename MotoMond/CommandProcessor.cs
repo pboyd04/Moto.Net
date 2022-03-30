@@ -23,48 +23,82 @@ namespace MotoMond
         }
     }
 
+    public delegate CommandResult CliCommand(String[] args);
+
+    public struct CMD
+    {
+        public String HelpText;
+        public bool Debug;
+        public CliCommand Cmd;
+
+        public CMD(string helpText, CliCommand cmd, bool debug)
+        {
+            HelpText = helpText;
+            Cmd = cmd;
+            Debug = debug;
+        }
+    }
+
     public class CommandProcessor
     {
         protected RadioSystem sys;
         protected LRRPClient lrrp;
         protected TMSClient tms;
+        protected Dictionary<string, CMD> Commands;
+        protected Dictionary<RadioID, IPAddress> radios;
 
-        public CommandProcessor(RadioSystem sys, LRRPClient lrrp, TMSClient tms)
+        public CommandProcessor(RadioSystem sys, LRRPClient lrrp, TMSClient tms, Dictionary<RadioID, IPAddress> controlStations)
         {
             this.sys = sys;
             this.lrrp = lrrp;
             this.tms = tms;
+            this.radios = controlStations;
+            this.Commands = new Dictionary<string, CMD>()
+            {
+                {"check", new CMD("Sends a radio check to a radio", this.RadioCheck, false) },
+                {"getip", new CMD("Gets the ip for a radio", this.RadioIP, false) },
+                {"getsystem", new CMD("Gets the system details", this.GetSystem, false) },
+                {"getradio", new CMD("Gets the radio details", this.GetRadio, false) },
+                {"locate", new CMD("Gets the radio location", this.RadioLocate, false) },
+                {"startlocate", new CMD("Tells the radio to periodically send its location back to the server", this.RadioStartLocate, false) },
+                {"stoplocate", new CMD("Tells the radio to stop sending its location back to the server", this.RadioStopLocate, false) },
+                {"text", new CMD("Sends the provided text to the radio", this.RadioText, false) },
+                {"listradios", new CMD("List radios from the system or from the db", this.ListRadios, false) },
+                {"help", new CMD("Displays this help message", this.Help, false) },
+                //These commands could result in odd behavior and so are left out of the help on purpose
+                {"debug_radiostatus", new CMD("Displays this help message", this.DebugRadioStatus, true) }
+            };
         }
 
         public CommandResult ProcessCommand(string command, string[] args)
         {
             string cmd = command.ToLower();
-            CommandResult res = new CommandResult();
-            switch (cmd)
+            if(this.Commands.ContainsKey(cmd))
             {
-                case "check":
-                    return RadioCheck(args);
-                case "getip":
-                    return RadioIP(args);
-                case "getsystem":
-                    res.Success = true;
-                    res.Data["sys"] = this.sys;
-                    return res;
-                case "getradio":
-                    return GetRadio(args);
-                case "locate":
-                    return RadioLocate(args);
-                case "startlocate":
-                    return RadioStartLocate(args);
-                case "stoplocate":
-                    return RadioStopLocate(args);
-                case "text":
-                    return RadioText(args);
-                default:
-                    res.Success = false;
-                    res.ex = new ArgumentException("Unknown command "+command);
-                    return res;
+                return this.Commands[cmd].Cmd(args);
             }
+            else
+            {
+                CommandResult res = new CommandResult();
+                res.Success = false;
+                res.ex = new ArgumentException("Unknown command " + command);
+                return res;
+            }
+        }
+
+        private CommandResult Help(string[] args)
+        {
+            CommandResult res = new CommandResult();
+            res.Success = true;
+            res.Data["help"] = "";
+            foreach(KeyValuePair<string, CMD> kv in this.Commands)
+            {
+                if (kv.Value.Debug == false)
+                {
+                    res.Data["help"] += kv.Key + " : " + kv.Value.HelpText + "\n";
+                }
+            }
+            return res;
         }
 
         private CommandResult GetRadio(string[] args)
@@ -93,6 +127,14 @@ namespace MotoMond
         private CommandResult RadioCheck(string[] args)
         {
             CommandResult res = new CommandResult();
+            res.Success = true;
+            res.Data["sys"] = this.sys;
+            return res;
+        }
+
+        private CommandResult GetSystem(string[] args)
+        {
+            CommandResult res = new CommandResult();
             if (args.Length < 1)
             {
                 res.Success = false;
@@ -117,7 +159,6 @@ namespace MotoMond
                 return res;
             }
             uint id = uint.Parse(args[0]);
-            float rssi = 0.0F;
             IPAddress ret = sys.GetIPForRadio(new RadioID(id));
             res.Success = true;
             res.Data["ip"] = ret;
@@ -224,6 +265,64 @@ namespace MotoMond
             string message = string.Join(" ", args.Skip(1).ToArray());
             bool ret = tms.SendText(message, new RadioID(id), sys, true);
             res.Success = ret;
+            return res;
+        }
+
+        private CommandResult ListRadios(string[] args)
+        {
+            CommandResult res = new CommandResult();
+            String source = "db";
+            if (args.Length > 1)
+            {
+                source = args[1];
+            }
+            //TODO implement
+            res.Success = true;
+            return res;
+        }
+
+        private CommandResult DebugRadioStatus(string[] args)
+        {
+            CommandResult res = new CommandResult();
+            if (args.Length < 1)
+            {
+                res.Success = false;
+                res.ex = new ArgumentException("Missing required argument radio ID!");
+                return res;
+            }
+            if (args.Length < 2)
+            {
+                res.Success = false;
+                res.ex = new ArgumentException("Missing required argument status!");
+                return res;
+            }
+            RadioID id = new RadioID(uint.Parse(args[0]));
+            if(!this.radios.ContainsKey(id))
+            {
+                Radio r1 = this.sys.FindRadioByID(id);
+                if (r1 != null)
+                {
+                    byte status = byte.Parse(args[1]);
+                    byte[] data = r1.GetRadioStatus((Moto.Net.Mototrbo.XNL.XCMP.XCMPStatus)status);
+                    res.Success = true;
+                    res.Data["data"] = BitConverter.ToString(data);
+                    res.Data["ASCII"] = ASCIIEncoding.ASCII.GetString(data);
+                    return res;
+                }
+                res.Success = false;
+                res.ex = new ArgumentException("Could not locate radio!");
+                return res;
+            }
+            IPAddress ip = this.radios[id];
+            using (LocalRadio r = new LocalRadio(this.sys, ip))
+            {
+                r.InitXNL();
+                byte status = byte.Parse(args[1]);
+                byte[] data = r.GetRadioStatus((Moto.Net.Mototrbo.XNL.XCMP.XCMPStatus)status);
+                res.Success = true;
+                res.Data["data"] = BitConverter.ToString(data);
+                res.Data["ASCII"] = ASCIIEncoding.ASCII.GetString(data);
+            }
             return res;
         }
     }

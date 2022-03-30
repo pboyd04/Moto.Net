@@ -29,6 +29,7 @@ namespace MotoMond
         static LRRPClient lrrp;
         static TMSClient tms;
         static Dictionary<string, string> modelMap;
+        static Dictionary<RadioID, IPAddress> controlStations;
 
         static void Main(string[] args)
         {
@@ -40,6 +41,7 @@ namespace MotoMond
                 String jsonString = reader.ReadToEnd();
                 modelMap = JsonSerializer.Deserialize<Dictionary<String, String>>(jsonString);
             }
+            controlStations = new Dictionary<RadioID, IPAddress>();
 
             db = new Database(ConfigurationManager.AppSettings.Get("dbConnectionString"));
             if(!db.IsSetup)
@@ -90,14 +92,11 @@ namespace MotoMond
                     using (LocalRadio lr = new LocalRadio(sys, ips[0].Address))
                     {
                         ProcessRadio(lr, "Control Station");
+                        controlStations.Add(lr.ID, ips[0].Address);
                     }
                 }
             }
-            /*using (Radio r = new LocalRadio(sys, IPAddress.Parse("12.0.3.240")))
-            {
-                ProcessRadio(r, "Network Test");
-            }*/
-            CommandProcessor cmd = new CommandProcessor(sys, lrrp, tms);
+            CommandProcessor cmd = new CommandProcessor(sys, lrrp, tms, controlStations);
             lrrp.GotLocationData += Lrrp_GotLocationData;
             RunCli(cmd);
             sys.Dispose();

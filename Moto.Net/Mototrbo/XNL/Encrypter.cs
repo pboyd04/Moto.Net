@@ -36,7 +36,7 @@ namespace Moto.Net.Mototrbo.XNL
                     return data;
                 } catch(Exception ex)
                 {
-                    throw new Exception("Unable to encrypt XNL data!", ex);
+                    throw new XNLNotSupportedException("Unable to encrypt XNL data!", ex);
                 }
             }
             UInt32 num1 = UInt32.Parse(const1Str);
@@ -82,7 +82,7 @@ namespace Moto.Net.Mototrbo.XNL
                 }
                 catch (Exception ex)
                 {
-                    throw new Exception("Unable to encrypt XNL data!", ex);
+                    throw new XNLNotSupportedException("Unable to encrypt XNL data!", ex);
                 }
             }
             UInt32 num1 = UInt32.Parse(const1Str);

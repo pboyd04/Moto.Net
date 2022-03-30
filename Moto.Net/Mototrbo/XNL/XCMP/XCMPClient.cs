@@ -26,6 +26,10 @@ namespace Moto.Net.Mototrbo.XNL.XCMP
             while(this.ready == false)
             {
                 System.Threading.Thread.Sleep(100);
+                if(this.client.Dead)
+                {
+                    return;
+                }
             }
         }
 
@@ -78,7 +82,7 @@ namespace Moto.Net.Mototrbo.XNL.XCMP
                 if (pkt.OpCode == XCMPOpCode.RadioStatusReply)
                 {
                     RadioStatusReply rsr = (RadioStatusReply)pkt;
-                    if (rsr.StatusType == statusType)
+                    if (rsr.StatusType == statusType || rsr.Error)
                     {
                         return rsr;
                     }

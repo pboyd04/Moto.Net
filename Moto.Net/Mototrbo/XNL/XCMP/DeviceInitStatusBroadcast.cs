@@ -10,7 +10,7 @@ namespace Moto.Net.Mototrbo.XNL.XCMP
     {
         DeviceFamily = 0, //5 seems to be the normal value here (but I'm supposed to send 0 from what I can see in responses)
         Display = 2, //0 means none
-        RFBand = 4, //1 seems to be UHF (as does 9...)
+        RFBand = 4, //1 seems to be UHF (as does 9... and 10?)
         GPIO = 5,
         RadioType = 7, //Seems to be 0 for mobile, 1 for portable, and 2 for repeaters
         Keypad = 9, //I think this is just boolean, 0 or 1

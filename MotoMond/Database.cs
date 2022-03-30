@@ -68,6 +68,15 @@ namespace MotoMond
             command = conn.CreateCommand();
             command.CommandText = "CREATE TABLE radio(id INT UNSIGNED NOT NULL, name VARCHAR(100), lastseen DATETIME, lastrssi FLOAT, samples INT, totalrssi DOUBLE, minrssi FLOAT, minrssitime DATETIME, maxrssi FLOAT, maxrssitime DATETIME, PRIMARY KEY(`id`));";
             command.ExecuteNonQuery();
+
+            this.CreateLocationTable();
+        }
+
+        private void CreateLocationTable()
+        {
+            MySqlCommand command = conn.CreateCommand();
+            command.CommandText = "CREATE TABLE location(id INT UNSIGNED NOT NULL AUTO_INCREMENT, radioid INT NOT NULL, latitude FLOAT, longitude FLOAT, rssi FLOAT, timestamp DATETIME, PRIMARY KEY(`id`));";
+            command.ExecuteNonQuery();
         }
 
         public string UpdateRepeater(RadioID id, string serialNum, string modelNum, string fwver)
@@ -161,7 +170,19 @@ namespace MotoMond
                 cmd.Parameters.AddWithValue("@long", lon);
                 cmd.Parameters.AddWithValue("@rssi", rssi);
                 cmd.Prepare();
-                cmd.ExecuteNonQuery();
+                try
+                {
+                    cmd.ExecuteNonQuery();
+                } catch(MySqlException ex)
+                {
+                    if(ex.Message.Contains("Table") && ex.Message.Contains("doesn't exist"))
+                    {
+                        this.CreateLocationTable();
+                        cmd.ExecuteNonQuery();
+                        return;
+                    }
+                    throw ex;
+                }
             }
         }
     }

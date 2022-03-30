@@ -172,6 +172,7 @@
     <Compile Include="Mototrbo\TCPClient.cs" />
     <Compile Include="Mototrbo\XNL\DevSysMapBroadcastPacket.cs" />
     <Compile Include="Mototrbo\XNL\XNLDevType.cs" />
+    <Compile Include="Mototrbo\XNL\XNLNotSupportedException.cs" />
     <Compile Include="PeerRadio.cs" />
     <Compile Include="MasterRadio.cs" />
     <Compile Include="Mototrbo\Bursts\Burst.cs" />

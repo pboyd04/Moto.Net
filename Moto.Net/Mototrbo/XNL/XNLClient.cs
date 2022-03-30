@@ -35,6 +35,7 @@ namespace Moto.Net.Mototrbo.XNL
         protected Dictionary<UInt16, XNLPacket> pendingTransactions;
         protected bool initSuccess;
         protected List<DevSysEntry> otherRadios;
+        protected bool isDead;
 
         public event XNLPacketHandler GotDataPacket;
 
@@ -51,6 +52,7 @@ namespace Moto.Net.Mototrbo.XNL
             this.tcpConnection = tcp;
             this.pendingTransactions = new Dictionary<ushort, XNLPacket>();
             this.otherRadios = new List<DevSysEntry>();
+            this.isDead = false;
 
             r.GotXNLXCMPPacket += new PacketHandler(this.HandleXNLPacket);
             this.initSuccess = this.Init();
@@ -97,7 +99,7 @@ namespace Moto.Net.Mototrbo.XNL
 
         private bool Init()
         {
-            log.Debug("Initializing...");
+            log.DebugFormat("{0}: Initializing...", System.Reflection.MethodBase.GetCurrentMethod().Name);
             if (!(this.r is LocalRadio))
             {
                 XNLPacket initPkt = new InitPacket();
@@ -114,12 +116,19 @@ namespace Moto.Net.Mototrbo.XNL
                     initRetryCount++;
                     if(initRetryCount > 3)
                     {
+                        log.DebugFormat("{0}: Exit. Timeout", System.Reflection.MethodBase.GetCurrentMethod().Name);
+                        return false;
+                    }
+                    if(isDead)
+                    {
+                        log.DebugFormat("{0}: Exit. No encrypter", System.Reflection.MethodBase.GetCurrentMethod().Name);
                         return false;
                     }
                     return this.Init();
                 }
             }
             this.GetAuthKey();
+            log.DebugFormat("{0}: Exit", System.Reflection.MethodBase.GetCurrentMethod().Name);
             return true;
         }
 
@@ -133,8 +142,17 @@ namespace Moto.Net.Mototrbo.XNL
         private void StartConnection(DevAuthKeyReplyPacket pkt)
         {
             log.DebugFormat("Sending connection request {0}...", pkt.TempID);
-            XNLPacket newPkt = new DevConnectionRequestPacket(this.masterID, pkt.TempID, new Address(0), 0x0A, 0x01, pkt.AuthKey, (this.r is MasterRadio));
-            this.SendPacket(newPkt);
+            try
+            {
+                XNLPacket newPkt = new DevConnectionRequestPacket(this.masterID, pkt.TempID, new Address(0), 0x0A, 0x01, pkt.AuthKey, (this.r is MasterRadio));
+                this.SendPacket(newPkt);
+            }
+            catch(XNLNotSupportedException e)
+            {
+                log.WarnFormat("Unable to finish XNL connection to device due to lack of encrypter. Operating at reduced feature set...");
+                this.isDead = true;
+            }
+            
         }
 
         private void ProcessSysMap(DevSysMapBroadcastPacket pkt)
@@ -230,6 +248,14 @@ namespace Moto.Net.Mototrbo.XNL
             get
             {
                 return this.initSuccess;
+            }
+        }
+
+        public bool Dead
+        {
+            get
+            {
+                return this.isDead;
             }
         }
     }

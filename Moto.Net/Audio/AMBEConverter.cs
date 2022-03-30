@@ -34,7 +34,14 @@ namespace Moto.Net.Audio
             this.decoderInputHandle = GCHandle.Alloc((object)this.decoderInput, GCHandleType.Pinned);
             this.decoderOutput = new short[160];
             this.decoderOutputHandle = GCHandle.Alloc((object)this.decoderOutput, GCHandleType.Pinned);
-            AMBEConverter.DSPINI_DMR_Decoder_Init(Marshal.UnsafeAddrOfPinnedArrayElement<byte>(this.decoderWorkingBuffer, 0), (short)1);
+            try
+            {
+                AMBEConverter.DSPINI_DMR_Decoder_Init(Marshal.UnsafeAddrOfPinnedArrayElement<byte>(this.decoderWorkingBuffer, 0), (short)1);
+            }
+            catch (DllNotFoundException ex)
+            {
+                throw new AudioNotSupportedException("Audio Not supported!", ex);
+            }
             this.encoderWorkingBuffer = new byte[7924];
             this.encoderWorkingBufferHandle = GCHandle.Alloc((object)this.encoderWorkingBuffer, GCHandleType.Pinned);
             this.encoderOutput = new bool[49];

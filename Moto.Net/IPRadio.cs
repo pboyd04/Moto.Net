@@ -40,11 +40,17 @@ namespace Moto.Net
         {
             this.sys.client.GotXNLXCMPPacket += new PacketHandler(this.HandleXNLPacket);
             this.xnlClient = new XNLClient(this, this.sys.ID);
-            if(this.xnlClient.InitSuccess == false)
+            if(this.xnlClient.InitSuccess == false || this.xnlClient.Dead)
             {
                 return false;
             }
             this.xcmpClient = new Mototrbo.XNL.XCMP.XCMPClient(this.xnlClient);
+            if(this.xnlClient.Dead)
+            {
+                this.xcmpClient = null;
+                this.xnlClient = null;
+                return false;
+            }
             return true;
         }
 

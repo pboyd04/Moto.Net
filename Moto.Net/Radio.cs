@@ -182,6 +182,12 @@ namespace Moto.Net
             return ret;
         }
 
+        public byte[] GetRadioStatus(XCMPStatus status)
+        {
+            RadioStatusReply reply = this.xcmpClient.GetRadioStatus(status);
+            return reply.Data;
+        }
+
         protected void FireXNLPacket(Packet pkt, System.Net.IPEndPoint ep)
         {
             if (this.GotXNLXCMPPacket != null)
