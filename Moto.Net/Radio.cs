@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 using Moto.Net.Mototrbo;
@@ -73,6 +74,18 @@ namespace Moto.Net
                 if(this.xnlClient != null)
                 {
                     return this.xnlClient.MasterID;
+                }
+                return new Address(0xFFFF);
+            }
+        }
+
+        public Address XNLClientID
+        {
+            get
+            {
+                if(this.xcmpClient != null)
+                {
+                    return this.xnlClient.XNLID;
                 }
                 return new Address(0xFFFF);
             }
@@ -203,6 +216,53 @@ namespace Moto.Net
                 return reply.Channel;
             }
             return 0;
+        }
+
+        public byte[] SendXCMP(XCMPPacket pkt)
+        {
+            if (this.xcmpClient != null)
+            {
+                XCMPPacket res = this.xcmpClient.SendPacketAndWaitForSameType(pkt);
+                return res.Encode();
+            }
+            return new byte[0];
+        }
+
+        public byte[] SendXNL(XNLPacket pkt)
+        {
+            if(this.xnlClient != null)
+            {
+                SemaphoreSlim signal = new SemaphoreSlim(0, 1);
+                XNLPacket res = null;
+                PacketHandler handler = new PacketHandler((sender, e) => {
+                    if(e.packet.PacketType == PacketType.XnlXCMPPacket)
+                    {
+                        res = ((XNLXCMPPacket)e.packet).XNLData;
+                        signal.Release();
+                    }
+                });
+                this.GotXNLXCMPPacket += handler;
+                this.xnlClient.SendPacket(pkt, false);
+                if (signal.Wait(5000) == false)
+                {
+                    this.GotXNLXCMPPacket -= handler;
+                    return new byte[0];
+                }
+                this.GotXNLXCMPPacket -= handler;
+                return res.Encode();
+            }
+            return new byte[0];
+        }
+
+        public String GetChannelName(UInt16 zoneId, UInt16 channel)
+        {
+            if (this.xcmpClient != null)
+            {
+                CloneReadReply reply = this.xcmpClient.DoCloneRead(zoneId, channel);
+                String ret = Encoding.BigEndianUnicode.GetString(reply.Data);
+                return ret.TrimEnd(new char[] { '\0' });
+            }
+            return "";
         }
 
         public byte[] GetRadioStatus(XCMPStatus status)
