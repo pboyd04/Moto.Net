@@ -13,6 +13,8 @@ namespace Moto.Net.Mototrbo.XNL.XCMP
         RadioStatusReply = 0x800E,
         VersionInfoRequest = 0x000F,
         VersionInfoReply = 0x800F,
+        CloneReadRequest = 0x010A,
+        CloneReadReply = 0x810A,
         ChannelSelectRequest = 0x040D,
         ChannelSelectReply = 0x840D,
         RRCtrlBroadcast = 0xB41C,
