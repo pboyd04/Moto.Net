@@ -125,8 +125,8 @@ namespace MotoMond
             }
             return res;
         }
-
-        private CommandResult RadioCheck(string[] args)
+        
+        private CommandResult GetSystem(string[] args)
         {
             CommandResult res = new CommandResult();
             res.Success = true;
@@ -134,7 +134,7 @@ namespace MotoMond
             return res;
         }
 
-        private CommandResult GetSystem(string[] args)
+        private CommandResult RadioCheck(string[] args)
         {
             CommandResult res = new CommandResult();
             if (args.Length < 1)
