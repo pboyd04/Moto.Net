@@ -266,7 +266,7 @@ namespace Moto.Net
 
         public Radio FindRadioByID(RadioID id)
         {
-            if(this.master != null && this.master.ID.Equals(id))
+            if(this.master != null && (this.master.ID == null || this.master.ID.Equals(id)))
             {
                 return master;
             }

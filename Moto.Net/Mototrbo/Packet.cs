@@ -15,6 +15,7 @@ namespace Moto.Net.Mototrbo
         public Packet(PacketType type)
         {
             this.type = type;
+            this.data = new byte[0];
         }
 
         public Packet(Byte[] data)
