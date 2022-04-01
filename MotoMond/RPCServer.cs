@@ -17,21 +17,31 @@ namespace MotoMond
         protected IModel evtchannel;
         protected EventingBasicConsumer consumer;
         protected RadioSystem sys;
+        protected bool connected;
 
         public RPCServer()
         {
             this.factory = new ConnectionFactory();
             factory.HostName = "localhost";
-            conn = factory.CreateConnection();
-            cmdchannel = conn.CreateModel();
-            evtchannel = conn.CreateModel();
-            cmdchannel.ExchangeDeclare(exchange: "radio_events", type: ExchangeType.Fanout);
-            evtchannel.QueueDeclare(queue: "radio_rpc", durable: false, exclusive: false, autoDelete: false, arguments: null);
-            cmdchannel.BasicQos(0, 1, false);
-            consumer = new EventingBasicConsumer(cmdchannel);
-            cmdchannel.BasicConsume(queue: "radio_rpc", autoAck: false, consumer: consumer);
-            Console.WriteLine("Awating RPC requests...");
-            consumer.Received += Consumer_Received;
+            try
+            {
+                conn = factory.CreateConnection();
+                cmdchannel = conn.CreateModel();
+                evtchannel = conn.CreateModel();
+                cmdchannel.ExchangeDeclare(exchange: "radio_events", type: ExchangeType.Fanout);
+                evtchannel.QueueDeclare(queue: "radio_rpc", durable: false, exclusive: false, autoDelete: false, arguments: null);
+                cmdchannel.BasicQos(0, 1, false);
+                consumer = new EventingBasicConsumer(cmdchannel);
+                cmdchannel.BasicConsume(queue: "radio_rpc", autoAck: false, consumer: consumer);
+                Console.WriteLine("Awating RPC requests...");
+                consumer.Received += Consumer_Received;
+                connected = true;
+            }
+            catch (RabbitMQ.Client.Exceptions.BrokerUnreachableException)
+            {
+                Console.WriteLine("Failed to connect to RabbitMQ. No gRPC will be available.");
+                connected = false;
+            }
         }
 
         public void SetSystem(RadioSystem sys)
@@ -83,13 +93,22 @@ namespace MotoMond
         {
             string message = JsonSerializer.Serialize(call);
             byte[] body = Encoding.UTF8.GetBytes(message);
-            evtchannel.BasicPublish("radio_events", "", basicProperties: null, body: body);
+            if (connected)
+            {
+                evtchannel.BasicPublish("radio_events", "", basicProperties: null, body: body);
+            }
         }
 
         ~RPCServer()
         {
-            cmdchannel.Close();
-            conn.Close();
+            if (cmdchannel != null)
+            {
+                cmdchannel.Close();
+            }
+            if (conn != null)
+            {
+                conn.Close();
+            }
         }
     }
 }
