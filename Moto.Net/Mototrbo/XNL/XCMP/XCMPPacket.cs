@@ -43,6 +43,8 @@ namespace Moto.Net.Mototrbo.XNL.XCMP
                     return new AlarmStatusReply(data);
                 case XCMPOpCode.ChannelSelectReply:
                     return new ChannelSelectReply(data);
+                case XCMPOpCode.CloneReadReply:
+                    return new CloneReadReply(data);
                 default:
                     return new XCMPPacket(data);
             }

@@ -68,7 +68,9 @@ namespace MotoMond
                 {"listradios", new CMD("List radios from the system or from the db", this.ListRadios, false) },
                 {"help", new CMD("Displays this help message", this.Help, false) },
                 //These commands could result in odd behavior and so are left out of the help on purpose
-                {"debug_radiostatus", new CMD("Displays this help message", this.DebugRadioStatus, true) }
+                {"debug_radiostatus", new CMD("Send a radio status command to the radio", this.DebugRadioStatus, true) },
+                {"debug_xcmp", new CMD("Send a XCMP packet to the radio ", this.DebugXCMP, true) },
+                {"debug_xnl", new CMD("Send a XNL packet to the radio ", this.DebugXNL, true) }
             };
         }
 
@@ -290,6 +292,19 @@ namespace MotoMond
             return res;
         }
 
+        private Radio getRadioForDebug(RadioID id, ref bool shouldClose)
+        {
+            if (!this.radios.ContainsKey(id))
+            {
+                shouldClose = false;
+                Radio r1 = this.sys.FindRadioByID(id);
+                return r1;
+            }
+            shouldClose = true;
+            IPAddress ip = this.radios[id];
+            return new LocalRadio(this.sys, ip);
+        }
+
         private CommandResult DebugRadioStatus(string[] args)
         {
             CommandResult res = new CommandResult();
@@ -306,31 +321,105 @@ namespace MotoMond
                 return res;
             }
             RadioID id = new RadioID(uint.Parse(args[0]));
-            if(!this.radios.ContainsKey(id))
+            bool shouldClose = false;
+            Radio r = getRadioForDebug(id, ref shouldClose);
+            if(shouldClose)
             {
-                Radio r1 = this.sys.FindRadioByID(id);
-                if (r1 != null)
+                using(r)
                 {
+                    r.InitXNL();
                     byte status = byte.Parse(args[1]);
-                    byte[] data = r1.GetRadioStatus((Moto.Net.Mototrbo.XNL.XCMP.XCMPStatus)status);
+                    byte[] data = r.GetRadioStatus((Moto.Net.Mototrbo.XNL.XCMP.XCMPStatus)status);
                     res.Success = true;
                     res.Data["data"] = BitConverter.ToString(data);
                     res.Data["ASCII"] = ASCIIEncoding.ASCII.GetString(data);
-                    return res;
                 }
-                res.Success = false;
-                res.ex = new ArgumentException("Could not locate radio!");
-                return res;
             }
-            IPAddress ip = this.radios[id];
-            using (LocalRadio r = new LocalRadio(this.sys, ip))
+            else
             {
-                r.InitXNL();
                 byte status = byte.Parse(args[1]);
                 byte[] data = r.GetRadioStatus((Moto.Net.Mototrbo.XNL.XCMP.XCMPStatus)status);
                 res.Success = true;
                 res.Data["data"] = BitConverter.ToString(data);
                 res.Data["ASCII"] = ASCIIEncoding.ASCII.GetString(data);
+            }
+            return res;
+        }
+
+        private CommandResult DebugXCMP(string[] args)
+        {
+            CommandResult res = new CommandResult();
+            if (args.Length < 1)
+            {
+                res.Success = false;
+                res.ex = new ArgumentException("Missing required argument radio ID!");
+                return res;
+            }
+            if (args.Length < 2)
+            {
+                res.Success = false;
+                res.ex = new ArgumentException("Missing required packet data!");
+                return res;
+            }
+            RadioID id = new RadioID(uint.Parse(args[0]));
+            byte[] pktData = Enumerable.Range(0, args[1].Length).Where(x => x % 2 == 0).Select(x => Convert.ToByte(args[1].Substring(x, 2), 16)).ToArray();
+            Moto.Net.Mototrbo.XNL.XCMP.XCMPPacket pkt = new Moto.Net.Mototrbo.XNL.XCMP.XCMPPacket(pktData);
+            bool shouldClose = false;
+            Radio r = getRadioForDebug(id, ref shouldClose);
+            if (shouldClose)
+            {
+                using (r)
+                {
+                    r.InitXNL();
+                    byte[] data = r.SendXCMP(pkt);
+                    res.Success = true;
+                    res.Data["data"] = BitConverter.ToString(data);
+                }
+            }
+            else
+            {
+                byte[] data = r.SendXCMP(pkt);
+                res.Success = true;
+                res.Data["data"] = BitConverter.ToString(data);
+            }
+            return res;
+        }
+
+        private CommandResult DebugXNL(string[] args)
+        {
+            CommandResult res = new CommandResult();
+            if (args.Length < 1)
+            {
+                res.Success = false;
+                res.ex = new ArgumentException("Missing required argument radio ID!");
+                return res;
+            }
+            if (args.Length < 2)
+            {
+                res.Success = false;
+                res.ex = new ArgumentException("Missing required packet data!");
+                return res;
+            }
+            RadioID id = new RadioID(uint.Parse(args[0]));
+            byte[] pktData = Enumerable.Range(0, args[1].Length).Where(x => x % 2 == 0).Select(x => Convert.ToByte(args[1].Substring(x, 2), 16)).ToArray();
+            Moto.Net.Mototrbo.XNL.XNLPacket pkt = new Moto.Net.Mototrbo.XNL.XNLPacket((Moto.Net.Mototrbo.XNL.OpCode)pktData[0], pktData.Skip(1).ToArray());
+            bool shouldClose = false;
+            Radio r = getRadioForDebug(id, ref shouldClose);
+            if (shouldClose)
+            {
+                using (r)
+                {
+                    r.InitXNL();
+                    byte[] data = r.SendXNL(pkt);
+                    res.Success = true;
+                    res.Data["data"] = BitConverter.ToString(data);
+                }
+            }
+            else
+            {
+                byte[] data = r.SendXNL(pkt);
+                res.Success = true;
+                res.Data["data"] = BitConverter.ToString(data);
             }
             return res;
         }

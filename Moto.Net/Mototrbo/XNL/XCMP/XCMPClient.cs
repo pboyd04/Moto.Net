@@ -68,6 +68,27 @@ namespace Moto.Net.Mototrbo.XNL.XCMP
             }
         }
 
+        public XCMPPacket SendPacketAndWaitForSameType(XCMPPacket pkt)
+        {
+            DataPacket dp = new DataPacket(pkt);
+            this.client.SendPacket(dp);
+            //The reply code is 0x8<whatever the sent code was>
+            XCMPOpCode repCode = (XCMPOpCode)(((UInt16)pkt.OpCode) | 0x8000);
+            while (true)
+            {
+                log.DebugFormat("Waiting for Packet...");
+                XCMPPacket res = this.WaitForPacket();
+                log.DebugFormat("Got Packet {0}", res);
+                if (repCode == res.OpCode)
+                {
+                    return res;
+                }
+                //Requeue this packet it wasn't for us...
+                this.receivedQueue.Add(res);
+                //TODO Timeout
+            }
+        }
+
         public RadioStatusReply GetRadioStatus(XCMPStatus statusType)
         {
             log.DebugFormat("Getting Radio Status {0}...", statusType);
@@ -147,6 +168,24 @@ namespace Moto.Net.Mototrbo.XNL.XCMP
             }
         }
 
+        public CloneReadReply DoCloneRead(UInt16 zoneId, UInt16 channel)
+        {
+            XCMPPacket req = new CloneReadRequest(zoneId, channel, 0x0F);
+            this.SendPacket(req);
+            while (true)
+            {
+                XCMPPacket pkt = this.WaitForPacket();
+                if (pkt.OpCode == XCMPOpCode.CloneReadReply)
+                {
+                    CloneReadReply r = (CloneReadReply)pkt;
+                    return r;
+                }
+                //Requeue this packet it wasn't for us...
+                this.receivedQueue.Add(pkt);
+                //TODO Timeout
+            }
+        }
+
         private void HandleXNLDataPacket(object sender, XNLEventArgs e)
         {
             XNLPacket pkt = e.Packet;
@@ -184,6 +223,7 @@ namespace Moto.Net.Mototrbo.XNL.XCMP
                     case XCMPOpCode.RadioStatusReply:
                     case XCMPOpCode.AlarmStatusReply:
                     case XCMPOpCode.ChannelSelectReply:
+                    case XCMPOpCode.CloneReadReply:
                         //These packets I know about and have logic to handle...
                         this.receivedQueue.Add(xcmp);
                         break;

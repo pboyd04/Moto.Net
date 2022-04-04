@@ -129,7 +129,7 @@ namespace MotoMond
             }
             //For control stations we don't know the ID until after XNL is initialized
             Console.WriteLine(dispname + " ID = {0}", r.ID);
-            Console.WriteLine("    XNL ID = {0}", r.XNLID);
+            Console.WriteLine("    XNL ID = {0} {1}", r.XNLID, r.XNLClientID);
             Console.WriteLine("    XCMP Version = {0}", r.XCMPVersion);
             string fwver = r.FirmwareVersion;
             Console.WriteLine("    Firmware Version = {0}", fwver);
@@ -165,6 +165,10 @@ namespace MotoMond
             {
                 int channelCount = r.GetChannelCountForZone((UInt16)(i + 1));
                 Console.WriteLine("        Zone[{0}] Channel Count = {1}", i+1, channelCount);
+                for(int j = 0; j < channelCount; j++)
+                {
+                    Console.WriteLine("            Channel {0} Name = {1}", j+1, r.GetChannelName((UInt16)(i + 1), (UInt16)(j + 1)));
+                }
             }
         }
 
@@ -190,7 +194,7 @@ namespace MotoMond
                         foreach (KeyValuePair<string, object> pair in res.Data)
                         {
                             var value = pair.Value;
-                            if(value is System.Collections.IEnumerable)
+                            if(!(value is String) && value is System.Collections.IEnumerable)
                             {
                                 //For some reason join doesn't work here...
                                 StringBuilder sb2 = new StringBuilder();

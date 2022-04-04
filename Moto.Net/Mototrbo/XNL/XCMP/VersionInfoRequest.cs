@@ -11,7 +11,7 @@ namespace Moto.Net.Mototrbo.XNL.XCMP
         public VersionInfoRequest() : base(XCMPOpCode.VersionInfoRequest)
         {
             this.data = new byte[1];
-            this.data[0] = 0x00;
+            this.data[0] = 0x00; //I think this is the type of firmware, like code, bootloader, codeplug, etc. Just leaving this on the regular firmware for now.
         }
 
         public VersionInfoRequest(byte[] data) : base(data)
