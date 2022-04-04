@@ -30,6 +30,7 @@ namespace MotoMond
         static TMSClient tms;
         static Dictionary<string, string> modelMap;
         static Dictionary<RadioID, IPAddress> controlStations;
+        static System.Timers.Timer rssiWatchdog;
 
         static void Main(string[] args)
         {
@@ -224,26 +225,33 @@ namespace MotoMond
 
         private static void StartNoiseFloorCollector()
         {
-            System.Timers.Timer t = new System.Timers.Timer(30000);
-            t.Elapsed += GetRSSI;
-            t.Enabled = true;
-            t.AutoReset = true;
+            rssiWatchdog = new System.Timers.Timer(30000);
+            rssiWatchdog.Elapsed += GetRSSI;
+            rssiWatchdog.Enabled = true;
+            rssiWatchdog.AutoReset = true;
         }
 
         private static void GetRSSI(Object src, System.Timers.ElapsedEventArgs e)
         {
-            if (sys.Master.ActiveCallCount == 0)
+            try
             {
-                Tuple<float, float> rssis = sys.Master.RSSI;
-                db.WriteRSSI(sys.Master.ID, rssis);
-            }
-            foreach(Radio r in sys.Peers)
-            {
-                if(r.ActiveCallCount == 0)
+                if (sys.Master.ActiveCallCount == 0)
                 {
-                    Tuple<float, float> rssis = r.RSSI;
-                    db.WriteRSSI(r.ID, rssis);
+                    Tuple<float, float> rssis = sys.Master.RSSI;
+                    db.WriteRSSI(sys.Master.ID, rssis);
                 }
+                foreach (Radio r in sys.Peers)
+                {
+                    if (r.ActiveCallCount == 0)
+                    {
+                        Tuple<float, float> rssis = r.RSSI;
+                        db.WriteRSSI(r.ID, rssis);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Failed to get RSSI. {0}\n{1}", ex.Message, ex.StackTrace);
             }
         }
 
@@ -337,12 +345,15 @@ namespace MotoMond
                         break;
                     case CallDataType.UnknownIP:
                         Console.WriteLine("Got Unknown IP Traffic! {0} => {1}" + rssiStr, call.From, call.To);
-                        Console.WriteLine("    Source IP = {0} Dest IP = {1} Protocol {2}", ((DataCall)call).Datagram.Source, ((DataCall)call).Datagram.Destination, ((DataCall)call).Datagram.Protocol);
-                        Console.WriteLine("    Source Port = {0} Dest Port = {1}", ((DataCall)call).Datagram.Transport.SourcePort, ((DataCall)call).Datagram.Transport.DestinationPort);
-                        if(((DataCall)call).Datagram.Protocol == IpV4Protocol.Tcp)
+                        if ((((DataCall)call).Datagram).IsValid)
                         {
+                            Console.WriteLine("    Source IP = {0} Dest IP = {1} Protocol {2}", ((DataCall)call).Datagram.Source, ((DataCall)call).Datagram.Destination, ((DataCall)call).Datagram.Protocol);
+                            Console.WriteLine("    Source Port = {0} Dest Port = {1}", ((DataCall)call).Datagram.Transport.SourcePort, ((DataCall)call).Datagram.Transport.DestinationPort);
+                            if (((DataCall)call).Datagram.Protocol == IpV4Protocol.Tcp)
+                            {
+                            }
+                            Console.WriteLine("    " + BitConverter.ToString(((DataCall)call).Datagram.Transport.Payload.ToArray()));
                         }
-                        Console.WriteLine("    " + BitConverter.ToString(((DataCall)call).Datagram.Transport.Payload.ToArray()));
                         break;
                     default:
                         Console.WriteLine("Data Call Type is {0}", dc.DataType);
