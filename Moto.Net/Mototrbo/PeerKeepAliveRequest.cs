@@ -26,6 +26,7 @@ namespace Moto.Net.Mototrbo
         public override byte[] Encode()
         {
             this.data = new byte[5];
+            /*
             this.data[0] = 0x45;
             if(this.digital)
             {
@@ -40,7 +41,10 @@ namespace Moto.Net.Mototrbo
             {
                 this.data[3] |= 0x80;
             }
-            this.data[4] = 0x2c;
+            this.data[4] = 0x2c;*/
+            this.data[0] = 0x40;
+            this.data[1] = 0x40;
+            this.data[4] = 0x20;
             return base.Encode();
         }
     }
