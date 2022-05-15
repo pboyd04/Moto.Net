@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Moto.Net.Mototrbo.XNL.XCMP
 {
-    public class CloneReadReply : XCMPPacket
+    public class CloneReadReply : XCMPReplyPacket
     {
         protected UInt16 zone;
         protected UInt16 channel;
