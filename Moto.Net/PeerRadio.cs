@@ -12,13 +12,13 @@ namespace Moto.Net
 {
     public class PeerRadio : IPRadio
     {
+        bool keepAliveStarted;
+
         public PeerRadio(RadioSystem sys, IPEndPoint ipend) : base(sys, ipend)
         {
+            keepAliveStarted = false;
             this.sys.client.GotPeerRegisterReply += Client_GotPeerRegisterReply;
             this.sys.client.GetPeerKeepAliveReply += Client_GetPeerKeepAliveReply;
-            //Start keep alive
-            Packet pkt = new PeerKeepAliveRequest(sys.ID);
-            this.SendPacket(pkt);
         }
 
         private void Client_GetPeerKeepAliveReply(object sender, PacketEventArgs e)
@@ -91,6 +91,16 @@ namespace Moto.Net
             get
             {
                 return 2;
+            }
+        }
+
+        public void StartKeepAlive(Packet resp)
+        {
+            if (!keepAliveStarted)
+            {
+                //Start keep alive
+                Packet pkt = new PeerKeepAliveRequest(sys.ID);
+                this.SendPacket(pkt);
             }
         }
     }

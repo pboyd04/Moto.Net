@@ -363,6 +363,7 @@ namespace Moto.Net
             else
             {
                 log.InfoFormat("Replying to known radio {0}", r);
+                ((PeerRadio)r).StartKeepAlive(resp);
                 r.SendPacket(resp);
             }
         }
