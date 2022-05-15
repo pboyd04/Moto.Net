@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Moto.Net.Mototrbo.XNL.XCMP
 {
-    public class VersionInfoReply : XCMPPacket
+    public class VersionInfoReply : XCMPReplyPacket
     {
         protected String version;
 

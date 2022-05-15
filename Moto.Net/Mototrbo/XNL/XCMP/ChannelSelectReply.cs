@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Moto.Net.Mototrbo.XNL.XCMP
 {
-    public class ChannelSelectReply : XCMPPacket
+    public class ChannelSelectReply : XCMPReplyPacket
     {
         protected ChannelSelectFunction function;
         protected UInt16 zone;

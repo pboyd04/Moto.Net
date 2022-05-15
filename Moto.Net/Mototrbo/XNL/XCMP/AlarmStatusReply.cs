@@ -24,7 +24,7 @@ namespace Moto.Net.Mototrbo.XNL.XCMP
         public Alarm Alarm;
     }
 
-    public class AlarmStatusReply : XCMPPacket
+    public class AlarmStatusReply : XCMPReplyPacket
     {
         protected AlarmStatus[] alarms;
 
