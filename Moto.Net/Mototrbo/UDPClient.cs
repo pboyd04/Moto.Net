@@ -27,9 +27,8 @@ namespace Moto.Net.Mototrbo
     {
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
         protected System.Net.Sockets.UdpClient rawClient;
-        protected bool running;
         protected bool ignoreUnknown;
-        protected Thread thread;
+        protected Int32 port;
         protected BlockingCollection<Packet> output;
 
         public event PacketHandler GotXNLXCMPPacket;
@@ -48,27 +47,31 @@ namespace Moto.Net.Mototrbo
 
         public UDPClient(Int32 port, bool ignoreUnknown)
         {
+            this.port = port;
             this.ignoreUnknown = ignoreUnknown;
-            this.rawClient = new System.Net.Sockets.UdpClient(port);
+            this.rawClient = new System.Net.Sockets.UdpClient();
+            this.rawClient.EnableBroadcast = true;
+            this.rawClient.ExclusiveAddressUse = true;
+            this.rawClient.AllowNatTraversal(true);
+            IPEndPoint localEP = new IPEndPoint(IPAddress.Any, port);
+            this.rawClient.Client.Bind(localEP);
             this.output = new BlockingCollection<Packet>();
-            this.running = true;
-            this.thread = new Thread(this.ListenThread);
-            this.thread.Start();
+            this.rawClient.BeginReceive(new AsyncCallback(this.GotData), null);
         }
 
-        public void ListenThread()
+        private void GotData(IAsyncResult result)
         {
-            while(running)
+            try
             {
-                IPEndPoint RemoteIpEndPoint = new IPEndPoint(IPAddress.Any, 0);
-                Byte[] receiveBytes = this.rawClient.Receive(ref RemoteIpEndPoint);
+                IPEndPoint RemoteIpEndPoint = new IPEndPoint(IPAddress.Any, port);
+                byte[] receiveBytes = this.rawClient.EndReceive(result, ref RemoteIpEndPoint);
                 Packet p = Packet.Decode(receiveBytes);
-                log.DebugFormat("Recieved {0}", p.ToString());
+                log.DebugFormat("Recieved {0} from {1}", p.ToString(), RemoteIpEndPoint.ToString());
                 PacketEventArgs e = new PacketEventArgs(p, RemoteIpEndPoint);
                 switch (p.PacketType)
                 {
                     case PacketType.XnlXCMPPacket:
-                        if(this.GotXNLXCMPPacket != null)
+                        if (this.GotXNLXCMPPacket != null)
                         {
                             this.GotXNLXCMPPacket(this, e);
                             break;
@@ -110,14 +113,14 @@ namespace Moto.Net.Mototrbo
                         }
                         goto default;
                     case PacketType.MasterKeepAliveReply:
-                        if(this.GotMasterKeepAliveReply != null)
+                        if (this.GotMasterKeepAliveReply != null)
                         {
                             this.GotMasterKeepAliveReply(this, e);
                             break;
                         }
                         goto default;
                     case PacketType.PeerListReply:
-                        if(this.GotPeerListReply != null)
+                        if (this.GotPeerListReply != null)
                         {
                             this.GotPeerListReply(this, e);
                             break;
@@ -127,26 +130,35 @@ namespace Moto.Net.Mototrbo
                     case PacketType.GroupVoiceCall:
                     case PacketType.PrivateDataCall:
                     case PacketType.PrivateVoiceCall:
-                        if(this.GotUserPacket != null)
+                        if (this.GotUserPacket != null)
                         {
                             this.GotUserPacket(this, e);
                             break;
                         }
                         goto default;
                     default:
-                        if(ignoreUnknown)
+                        if (!ignoreUnknown)
                         {
-                            continue;
+                            log.ErrorFormat("Got an unknown packet {0}", p);
+                            output.Add(p);
                         }
-                        log.ErrorFormat("Got an unknown packet {0}", p);
-                        output.Add(p);
                         break;
                 }
+                this.rawClient.BeginReceive(new AsyncCallback(this.GotData), null);
+            }
+            catch (ObjectDisposedException)
+            {
+                //UDPClient is being disposed, this is fine, just ignore this exception
+                return;
             }
         }
 
         public bool Send(Packet packet, IPEndPoint remotesystem)
         {
+            if(this.rawClient == null)
+            {
+                return false;
+            }
             byte[] bytes;
             int ret;
             log.DebugFormat("Sending packet {0} to {1}", packet, remotesystem);
@@ -168,10 +180,10 @@ namespace Moto.Net.Mototrbo
         {
             if (!disposedValue)
             {
-                this.thread.Abort();
                 if (disposing)
                 {
                     this.rawClient.Close();
+                    this.rawClient = null;
                     this.output.Dispose();
                 }
 
