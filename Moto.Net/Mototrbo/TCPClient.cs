@@ -25,14 +25,6 @@ namespace Moto.Net.Mototrbo
         private byte[] buffer = new byte[1024];
 
         public event PacketHandler GotXNLXCMPPacket;
-        public event PacketHandler GotRegistrationReply;
-        public event PacketHandler GotPeerRegisterRequest;
-        public event PacketHandler GotPeerRegisterReply;
-        public event PacketHandler GetPeerKeepAliveRequest;
-        public event PacketHandler GetPeerKeepAliveReply;
-        public event PacketHandler GotPeerListReply;
-        public event PacketHandler GotMasterKeepAliveReply;
-        public event PacketHandler GotUserPacket;
 
         public TCPClient(IPEndPoint ep) : this(ep, false)
         {
