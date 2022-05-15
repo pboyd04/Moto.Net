@@ -12,6 +12,15 @@ namespace Moto.Net.Mototrbo
         public string Address;
         public UInt16 Port;
         public byte Mode;
+
+        public override string ToString()
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.Append("{");
+            sb.AppendFormat("ID: {0}, Address: {1}, Port: {2}, Mode: {3}", this.ID, this.Address, this.Port, this.Mode);
+            sb.Append("}");
+            return sb.ToString();
+        }
     }
 
     public class PeerListReply : Packet
@@ -43,6 +52,16 @@ namespace Moto.Net.Mototrbo
             {
                 return this.peers;
             }
+        }
+
+        public override string ToString()
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.Append(this.GetType().Name);
+            sb.Append("{");
+            sb.AppendFormat("PacketType: {0}, ID: {1}, Peers: {2}", this.PacketType, this.ID, string.Join(",", this.Peers));
+            sb.Append("}");
+            return sb.ToString();
         }
     }
 }
