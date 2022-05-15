@@ -22,6 +22,38 @@ namespace Moto.Net.Mototrbo.XNL
 
     public class XNLClient
     {
+        protected class XNLTransaction
+        {
+            XNLPacket pkt;
+            int retryCount = 0;
+
+            public XNLTransaction(XNLPacket pkt)
+            {
+                this.pkt = pkt;
+                this.retryCount = 0;
+            }
+
+            public XNLPacket Packet
+            {
+                get
+                {
+                    return pkt;
+                }
+            }
+
+            public int RetryCount
+            {
+                get
+                {
+                    return retryCount;
+                }
+                set
+                {
+                    retryCount = value;
+                }
+            }
+        }
+
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
         private int initRetryCount = 0;
 
@@ -32,7 +64,7 @@ namespace Moto.Net.Mototrbo.XNL
         protected bool tcpConnection;
         protected UInt16 transactionID;
         protected byte flags;
-        protected Dictionary<UInt16, XNLPacket> pendingTransactions;
+        protected Dictionary<UInt16, XNLTransaction> pendingTransactions;
         protected bool initSuccess;
         protected List<DevSysEntry> otherRadios;
         protected bool isDead;
@@ -50,7 +82,7 @@ namespace Moto.Net.Mototrbo.XNL
             this.transactionID = 0;
             this.flags = 0;
             this.tcpConnection = tcp;
-            this.pendingTransactions = new Dictionary<ushort, XNLPacket>();
+            this.pendingTransactions = new Dictionary<ushort, XNLTransaction>();
             this.otherRadios = new List<DevSysEntry>();
             this.isDead = false;
 
@@ -132,6 +164,11 @@ namespace Moto.Net.Mototrbo.XNL
             return true;
         }
 
+        public bool ReInit()
+        {
+            return this.initSuccess = this.Init();
+        }
+
         private void GetAuthKey()
         {
             log.Debug("Sending auth key request...");
@@ -144,7 +181,7 @@ namespace Moto.Net.Mototrbo.XNL
             log.DebugFormat("Sending connection request {0}...", pkt.TempID);
             try
             {
-                XNLPacket newPkt = new DevConnectionRequestPacket(this.masterID, pkt.TempID, new Address(0), 0x0A, 0x01, pkt.AuthKey, (this.r is MasterRadio));
+                XNLPacket newPkt = new DevConnectionRequestPacket(this.masterID, pkt.TempID, new Address(0), 0x0A, 0x01, pkt.AuthKey, ((this.r is MasterRadio) || (this.r is PeerRadio)));
                 this.SendPacket(newPkt);
             }
             catch(XNLNotSupportedException e)
@@ -186,9 +223,10 @@ namespace Moto.Net.Mototrbo.XNL
                 {
                     this.flags = 0;
                 }
-                this.pendingTransactions[xnl.TransactionID] = xnl;
+                this.pendingTransactions[xnl.TransactionID] = new XNLTransaction(xnl);
                 System.Timers.Timer t = new System.Timers.Timer(5000);
                 t.Elapsed += (sender, e) => this.ResendPacket(sender, e, xnl.TransactionID);
+                t.Start();
             }
             XNLXCMPPacket pkt = new XNLXCMPPacket(this.id, xnl);
             r.SendPacket(pkt);
@@ -209,9 +247,10 @@ namespace Moto.Net.Mototrbo.XNL
                 {
                     this.flags = 0;
                 }
-                this.pendingTransactions[xnl.TransactionID] = xnl;
+                this.pendingTransactions[xnl.TransactionID] = new XNLTransaction(xnl);
                 System.Timers.Timer t = new System.Timers.Timer(5000);
                 t.Elapsed += (sender, e) => this.ResendPacket(sender, e, xnl.TransactionID);
+                t.Start();
             }
             XNLXCMPPacket pkt = new XNLXCMPPacket(this.id, xnl);
             log.DebugFormat("Sending {0} to {1}", pkt, xnl.Destination);
@@ -223,7 +262,14 @@ namespace Moto.Net.Mototrbo.XNL
             if(this.pendingTransactions.ContainsKey(transactionID))
             {
                 log.InfoFormat("Transaction {0} is still pending...", transactionID);
-                //TODO actually resend the packet if needed
+                this.pendingTransactions[transactionID].RetryCount++;
+                if(this.pendingTransactions[transactionID].RetryCount >= 3)
+                {
+                    this.ReInit();
+                }
+                XNLXCMPPacket pkt = new XNLXCMPPacket(this.id, this.pendingTransactions[transactionID].Packet);
+                log.DebugFormat("Retrying {0}", pkt);
+                r.SendPacket(pkt);
             }
         }
 
