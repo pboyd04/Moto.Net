@@ -163,7 +163,7 @@ namespace Moto.Net
                 if(this.xcmpClient != null)
                 {
                     RadioStatusReply reply = this.xcmpClient.GetRadioStatus(XCMPStatus.RSSI);
-                    if (reply.Data.Length > 2)
+                    if (reply != null && reply.Data.Length > 2)
                     {
                         return new Tuple<float, float>(Mototrbo.Util.CalcRSSI(reply.Data, 0), Mototrbo.Util.CalcRSSI(reply.Data, 2));
                     }
@@ -291,12 +291,12 @@ namespace Moto.Net
             RadioID to = upkt.Destination;
             if(activeCalls.ContainsKey(to))
             {
-                log.Debug("Appending to active call...");
+                log.DebugFormat("{0}: Appending to active call...", this.ID);
                 activeCalls[to].AppendPkt(upkt);
             }
             else
             {
-                log.Debug("Creating new call...");
+                log.DebugFormat("{0}: Creating new call...", this.ID);
                 if (upkt.PacketType == PacketType.GroupDataCall || upkt.PacketType == PacketType.PrivateDataCall)
                 {
                     activeCalls[to] = new DataCall(upkt);
