@@ -55,13 +55,18 @@ namespace Moto.Net.Mototrbo.XNL.XCMP
             this.client.SendPacket(dp);
         }
 
-        protected XCMPPacket WaitForPacket()
+        protected XCMPPacket WaitForPacket(int timeout)
         {
             while (true)
             {
                 try
                 {
-                    return this.receivedQueue.Take();
+                    XCMPPacket pkt;
+                    if(this.receivedQueue.TryTake(out pkt, timeout))
+                    {
+                        return pkt;
+                    }
+                    return null;
                 }
                 catch (InvalidOperationException) { }
                 //TODO Timeout...
@@ -77,7 +82,7 @@ namespace Moto.Net.Mototrbo.XNL.XCMP
             while (true)
             {
                 log.DebugFormat("Waiting for Packet...");
-                XCMPPacket res = this.WaitForPacket();
+                XCMPPacket res = this.WaitForPacket(5000);
                 log.DebugFormat("Got Packet {0}", res);
                 if (repCode == res.OpCode)
                 {
@@ -98,12 +103,12 @@ namespace Moto.Net.Mototrbo.XNL.XCMP
             while (true)
             {
                 log.DebugFormat("Waiting for Packet...");
-                XCMPPacket pkt = this.WaitForPacket();
+                XCMPPacket pkt = this.WaitForPacket(5000);
                 log.DebugFormat("Got Packet {0}", pkt);
                 if (pkt.OpCode == XCMPOpCode.RadioStatusReply)
                 {
                     RadioStatusReply rsr = (RadioStatusReply)pkt;
-                    if (rsr.StatusType == statusType || rsr.Error)
+                    if (rsr.StatusType == statusType || rsr.ErrorCode != XCMPErrorCode.Success)
                     {
                         return rsr;
                     }
@@ -120,7 +125,7 @@ namespace Moto.Net.Mototrbo.XNL.XCMP
             this.SendPacket(req);
             while(true)
             {
-                XCMPPacket pkt = this.WaitForPacket();
+                XCMPPacket pkt = this.WaitForPacket(5000);
                 if (pkt.OpCode == XCMPOpCode.VersionInfoReply)
                 {
                     VersionInfoReply vir = (VersionInfoReply)pkt;
@@ -138,7 +143,7 @@ namespace Moto.Net.Mototrbo.XNL.XCMP
             this.SendPacket(req);
             while (true)
             {
-                XCMPPacket pkt = this.WaitForPacket();
+                XCMPPacket pkt = this.WaitForPacket(5000);
                 if (pkt.OpCode == XCMPOpCode.AlarmStatusReply)
                 {
                     AlarmStatusReply asr = (AlarmStatusReply)pkt;
@@ -156,7 +161,7 @@ namespace Moto.Net.Mototrbo.XNL.XCMP
             this.SendPacket(req);
             while (true)
             {
-                XCMPPacket pkt = this.WaitForPacket();
+                XCMPPacket pkt = this.WaitForPacket(5000);
                 if (pkt.OpCode == XCMPOpCode.ChannelSelectReply)
                 {
                     ChannelSelectReply r = (ChannelSelectReply)pkt;
@@ -174,7 +179,7 @@ namespace Moto.Net.Mototrbo.XNL.XCMP
             this.SendPacket(req);
             while (true)
             {
-                XCMPPacket pkt = this.WaitForPacket();
+                XCMPPacket pkt = this.WaitForPacket(5000);
                 if (pkt.OpCode == XCMPOpCode.CloneReadReply)
                 {
                     CloneReadReply r = (CloneReadReply)pkt;
@@ -225,6 +230,12 @@ namespace Moto.Net.Mototrbo.XNL.XCMP
                     case XCMPOpCode.ChannelSelectReply:
                     case XCMPOpCode.CloneReadReply:
                         //These packets I know about and have logic to handle...
+                        if(((XCMPReplyPacket)xcmp).ErrorCode == XCMPErrorCode.ReInitXNL)
+                        {
+                            Console.WriteLine("Starting XNL ReInit!");
+                            //Need to reinit my XNL connection...
+                            this.ready = this.client.ReInit();
+                        }
                         this.receivedQueue.Add(xcmp);
                         break;
                     default:
