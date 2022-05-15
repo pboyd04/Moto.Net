@@ -18,12 +18,13 @@ using Moto.Net.Mototrbo.TMS;
 using System.Text;
 using System.Reflection;
 using System.Text.Json;
+using MotoMond.Database;
 
 namespace MotoMond
 {
     class Program
     {
-        static Database db;
+        static IDatabase db;
         static RPCServer srv;
         static RadioSystem sys;
         static LRRPClient lrrp;
@@ -43,13 +44,21 @@ namespace MotoMond
                 modelMap = JsonSerializer.Deserialize<Dictionary<String, String>>(jsonString);
             }
             controlStations = new Dictionary<RadioID, IPAddress>();
-
-            db = new Database(ConfigurationManager.AppSettings.Get("dbConnectionString"));
-            if(!db.IsSetup)
+            Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+            ConfigurationSectionGroup group = config.GetSectionGroup("Databases");
+            if (group.Sections.Count == 1)
             {
-                Console.WriteLine("Seting up DB...");
-                db.CreateTables();
+                db = (IDatabase)group.Sections[0];
             }
+            else
+            {
+                db = new DatabaseMultiPlexer();
+                foreach (IDatabase child in group.Sections)
+                {
+                    ((DatabaseMultiPlexer)db).AddChild(child);
+                }
+            }
+            db.CreateTables();
 
             string masterIP = "192.168.0.100";
             int masterPort = 50000;
@@ -150,7 +159,7 @@ namespace MotoMond
             {
                 Console.WriteLine("        {0}: {1}", kvp.Key, kvp.Value);
             }
-            string name = db.UpdateRepeater(r.ID, serialNum, modelNum, fwver);
+            string name = db.UpdateConnectedRadio(r.ID, serialNum, modelNum, fwver);
             r.Name = name;
             Tuple<float, float> rssis = r.RSSI;
             if (!(r is LocalRadio))
@@ -239,16 +248,29 @@ namespace MotoMond
         {
             try
             {
+                Console.WriteLine("Master Active Call Count is {0}", sys.Master.ActiveCallCount);
                 if (sys.Master.ActiveCallCount == 0)
                 {
+                    Console.WriteLine("Getting RSSI for radio {0}", sys.Master.ID);
                     Tuple<float, float> rssis = sys.Master.RSSI;
-                    db.WriteRSSI(sys.Master.ID, rssis);
+                    Console.WriteLine("Got RSSI {0}", rssis);
+                    //Skip writing error data...
+                    if(rssis.Item1 != -1f && rssis.Item2 != -1f)
+                    {
+                        db.WriteRSSI(sys.Master.ID, rssis);
+                    }
                 }
                 foreach (Radio r in sys.Peers)
                 {
                     if (r.ActiveCallCount == 0)
                     {
+                        Console.WriteLine("Getting RSSI for radio {0}", r.ID);
                         Tuple<float, float> rssis = r.RSSI;
+                        Console.WriteLine("Got RSSI {0}", rssis);
+                        if (rssis.Item1 == -1f || rssis.Item2 == -1f)
+                        {
+                            continue;
+                        }
                         db.WriteRSSI(r.ID, rssis);
                     }
                 }

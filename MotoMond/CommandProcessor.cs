@@ -2,6 +2,7 @@
 using Moto.Net.Mototrbo.Bursts.CSBK;
 using Moto.Net.Mototrbo.LRRP;
 using Moto.Net.Mototrbo.TMS;
+using MotoMond.Database;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -46,9 +47,9 @@ namespace MotoMond
         protected TMSClient tms;
         protected Dictionary<string, CMD> Commands;
         protected Dictionary<RadioID, IPAddress> radios;
-        protected Database db;
+        protected IDatabase db;
 
-        public CommandProcessor(RadioSystem sys, LRRPClient lrrp, TMSClient tms, Dictionary<RadioID, IPAddress> controlStations, Database db)
+        public CommandProcessor(RadioSystem sys, LRRPClient lrrp, TMSClient tms, Dictionary<RadioID, IPAddress> controlStations, IDatabase db)
         {
             this.sys = sys;
             this.lrrp = lrrp;
