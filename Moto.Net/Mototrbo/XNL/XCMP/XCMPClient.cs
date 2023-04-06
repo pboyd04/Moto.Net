@@ -104,6 +104,11 @@ namespace Moto.Net.Mototrbo.XNL.XCMP
             {
                 log.DebugFormat("Waiting for Packet...");
                 XCMPPacket pkt = this.WaitForPacket(5000);
+                if(pkt == null)
+                {
+                    log.Warn("Timedout waiting for radio status packet!");
+                    return null;
+                }
                 log.DebugFormat("Got Packet {0}", pkt);
                 if (pkt.OpCode == XCMPOpCode.RadioStatusReply)
                 {
