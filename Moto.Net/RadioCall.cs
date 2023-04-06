@@ -195,7 +195,18 @@ namespace Moto.Net
             {
                 log.ErrorFormat("Got packet with mismatching group tag! {0} != {1}", upkt.GroupTag, this.groupTag);
             }
-            this.bursts.Add(upkt.RTP.SequenceNumber, upkt.Burst);
+            try
+            {
+                this.bursts.Add(upkt.RTP.SequenceNumber, upkt.Burst);
+            }
+            catch(ArgumentException ex)
+            {
+                if(ex.Message.Equals("An entry with the same key already exists."))
+                {
+                    //The burst is a retransmission ignore the error
+                }
+                throw ex;
+            }
             this.isEnded = upkt.End;
             if(upkt.End)
             {
