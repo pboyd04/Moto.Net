@@ -55,7 +55,7 @@ namespace Moto.Net.Mototrbo
             this.rawClient.AllowNatTraversal(true);
             IPEndPoint localEP = new IPEndPoint(IPAddress.Any, port);
             this.rawClient.Client.Bind(localEP);
-            this.output = new BlockingCollection<Packet>();
+            this.output = new BlockingCollection<Packet>(100); //Save at most the last 100 packets...
             this.rawClient.BeginReceive(new AsyncCallback(this.GotData), null);
         }
 
