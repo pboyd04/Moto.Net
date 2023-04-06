@@ -8,6 +8,14 @@ namespace Moto.Net.Mototrbo
 {
     public enum PacketType
     {
+        /// <summary>
+        /// This seems to indicate when a radio makes a call but doesn't include the full call data
+        /// </summary>
+        CallNotification = 0x61,
+        /// <summary>
+        /// This seems to indicate the status of the two time slots on the repeater
+        /// </summary>
+        CallStatusNotification = 0x62,
         XnlXCMPPacket = 0x70,
         GroupVoiceCall = 0x80,
         PrivateVoiceCall = 0x81,
