@@ -27,7 +27,7 @@ namespace Moto.Net
             log.DebugFormat("Found Master Radio {0}", this.id);
             //Start Keep Alive
             this.sys.client.GotMasterKeepAliveReply += new PacketHandler(this.HandleKeepAlive);
-            MasterKeepAliveRequest kapkt = new MasterKeepAliveRequest(this.sys.ID, this.sys.SystemType);
+            MasterKeepAliveRequest kapkt = new MasterKeepAliveRequest(this.sys.ID, this.sys.SystemType, this.sys.RegistrationFlags);
             this.SendPacket(kapkt);
         }
 
@@ -40,7 +40,7 @@ namespace Moto.Net
 
         private void SendKeepAlive(Object src, ElapsedEventArgs e)
         {
-            MasterKeepAliveRequest kapkt = new MasterKeepAliveRequest(this.sys.ID, this.sys.SystemType);
+            MasterKeepAliveRequest kapkt = new MasterKeepAliveRequest(this.sys.ID, this.sys.SystemType, this.sys.RegistrationFlags);
             this.SendPacket(kapkt);
             System.Timers.Timer t = (System.Timers.Timer)src;
             t.Stop();

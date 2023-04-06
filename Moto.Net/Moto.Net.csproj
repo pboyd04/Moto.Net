@@ -163,6 +163,8 @@
     <Compile Include="Audio\NullConverter.cs" />
     <Compile Include="DataCall.cs" />
     <Compile Include="Mototrbo\Bursts\DataBurst.cs" />
+    <Compile Include="Mototrbo\CallStatusNotificationPacket.cs" />
+    <Compile Include="Mototrbo\CallNotificationPacket.cs" />
     <Compile Include="Mototrbo\LRRP\ImmediateLocationRequestPacket.cs" />
     <Compile Include="Mototrbo\LRRP\ImmediateLocationResponsePacket.cs" />
     <Compile Include="Mototrbo\LRRP\LRRPClient.cs" />
@@ -179,6 +181,7 @@
     <Compile Include="IPRadio.cs" />
     <Compile Include="Mototrbo\PeerKeepAliveRequest.cs" />
     <Compile Include="Mototrbo\PeerRegistrationRequest.cs" />
+    <Compile Include="Mototrbo\RegistrationFlags.cs" />
     <Compile Include="Mototrbo\TMS\TMSClient.cs" />
     <Compile Include="Mototrbo\TCPClient.cs" />
     <Compile Include="Mototrbo\XNL\DevSysMapBroadcastPacket.cs" />

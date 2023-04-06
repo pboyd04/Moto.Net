@@ -66,7 +66,7 @@ namespace Moto.Net
 
         private void SendKeepAlive(Object src, ElapsedEventArgs e)
         {
-            Packet pkt = new PeerKeepAliveRequest(sys.ID);
+            Packet pkt = new PeerKeepAliveRequest(sys.ID, true, sys.RegistrationFlags);
             this.SendPacket(pkt);
             System.Timers.Timer t = (System.Timers.Timer)src;
             t.Stop();
@@ -99,7 +99,7 @@ namespace Moto.Net
             if (!keepAliveStarted)
             {
                 //Start keep alive
-                Packet pkt = new PeerKeepAliveRequest(sys.ID);
+                Packet pkt = new PeerKeepAliveRequest(sys.ID, true, sys.RegistrationFlags);
                 this.SendPacket(pkt);
             }
         }

@@ -28,6 +28,7 @@ namespace Moto.Net
         protected Dictionary<RadioID, RadioCall> activeCalls;
         protected LRRPClient lrrp;
         protected TMSClient tms;
+        protected RegistrationFlags registrationFlags = RegistrationFlags.CSKBSupport | RegistrationFlags.CallMonitor | RegistrationFlags.Software | RegistrationFlags.XNLDevice | RegistrationFlags.SomethingElseThatIsRequired | RegistrationFlags.DataCallSupport | RegistrationFlags.VoiceCallSupport;
 
         public event CallHander GotRestCall;
         public event CallHander GotRadioCall;
@@ -73,7 +74,7 @@ namespace Moto.Net
 
         public void SendRegistrationPacket(IPEndPoint ipend)
         {
-            MasterRegistrationRequest pkt = new MasterRegistrationRequest(this.myID, this.type);
+            MasterRegistrationRequest pkt = new MasterRegistrationRequest(this.myID, this.type, this.RegistrationFlags);
             this.client.Send(pkt, ipend);
         }
 
@@ -407,6 +408,14 @@ namespace Moto.Net
                 uint slots = master.TimeSlots;
                 
                 return slots;
+            }
+        }
+
+        public RegistrationFlags RegistrationFlags
+        {
+            get
+            {
+                return this.registrationFlags;
             }
         }
 

@@ -9,18 +9,13 @@ namespace Moto.Net.Mototrbo
     public class PeerKeepAliveRequest : Packet
     {
         protected bool digital;
-        protected bool supportsCSBK;
+        protected RegistrationFlags flags;
 
-        public PeerKeepAliveRequest(RadioID id) : this(id, true, true)
-        {
-
-        }
-
-        public PeerKeepAliveRequest(RadioID id, bool digital, bool csbk) : base(PacketType.PeerKeepAliveRequest)
+        public PeerKeepAliveRequest(RadioID id, bool digital, RegistrationFlags flags) : base(PacketType.PeerKeepAliveRequest)
         {
             this.id = id;
             this.digital = digital;
-            this.supportsCSBK = csbk;
+            this.flags = flags;
         }
 
         public override byte[] Encode()
@@ -42,9 +37,13 @@ namespace Moto.Net.Mototrbo
                 this.data[3] |= 0x80;
             }
             this.data[4] = 0x2c;*/
-            this.data[0] = 0x40;
-            this.data[1] = 0x40;
-            this.data[4] = 0x20;
+            this.data[0] = 0x60;
+            byte[] bytes = BitConverter.GetBytes((UInt32)this.flags);
+            if (BitConverter.IsLittleEndian)
+            {
+                Array.Reverse(bytes);
+            }
+            Array.Copy(bytes, 0, this.data, 1, 4);
             return base.Encode();
         }
     }

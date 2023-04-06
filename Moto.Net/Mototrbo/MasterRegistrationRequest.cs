@@ -9,18 +9,14 @@ namespace Moto.Net.Mototrbo
     public class MasterRegistrationRequest : Packet
     {
         protected bool digital;
-        protected bool supportsCSBK;
+        protected RegistrationFlags flags;
         protected RadioSystemType systype;
 
-        public MasterRegistrationRequest(RadioID id) : this(id, RadioSystemType.IPSiteConnect)
-        {
-        }
-
-        public MasterRegistrationRequest(RadioID id, RadioSystemType type) : base(PacketType.RegistrationRequest)
+        public MasterRegistrationRequest(RadioID id, RadioSystemType type, RegistrationFlags flags) : base(PacketType.RegistrationRequest)
         {
             this.id = id;
             this.digital = true;
-            this.supportsCSBK = true;
+            this.flags = flags;
             this.systype = type;
         }
 
@@ -32,8 +28,9 @@ namespace Moto.Net.Mototrbo
         public override byte[] Encode()
         {
             this.data = new byte[9];
-            this.data[0] = 0x45;
-            if(this.digital)
+            //this.data[0] = 0x45; //Still haven't fully parsed this byte. The least significant 2 nibbles are the channel slot 0 status, the next 2 are the channel slot 1 status
+            this.data[0] = 0x40;
+            if (this.digital)
             {
                 this.data[0] |= 0x20;
             }
@@ -41,12 +38,12 @@ namespace Moto.Net.Mototrbo
             {
                 this.data[0] |= 0x10;
             }
-            if(this.supportsCSBK)
+            byte[] bytes = BitConverter.GetBytes((UInt32)this.flags);
+            if (BitConverter.IsLittleEndian)
             {
-                this.data[3] |= 0x80;
+                Array.Reverse(bytes);
             }
-            this.data[3] |= 0x20;
-            this.data[4] = 0x2C;
+            Array.Copy(bytes, 0, this.data, 1, 4);
             this.data[5] = (byte)this.systype;
             this.data[6] = 0x06;
             this.data[7] = (byte)this.systype;
