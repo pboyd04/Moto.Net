@@ -22,7 +22,6 @@ namespace MotoMond.Database
 
         public override void CreateTables()
         {
-            return;
         }
 
         public override DBRadio ReadRadio(RadioID id)

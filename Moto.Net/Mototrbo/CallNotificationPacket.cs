@@ -55,7 +55,7 @@ namespace Moto.Net.Mototrbo
             this.callTo = new RadioID(this.data, 14, 3);
             this.callType = (CallType)this.data[17];
             //Next byte always seems to be 0...
-            this.encrypted = (bool)(this.data[19] != 0);
+            this.encrypted = (this.data[19] != 0);
             //Next byte always seems to be 0 or 16 when encrypted (reundant data?). The next two bytes are also always 0... 
             this.rssi = Util.CalcRSSI(this.data, 23);
             //This is also always 0...
@@ -71,16 +71,8 @@ namespace Moto.Net.Mototrbo
 
         public override byte[] Encode()
         {
-            this.data = new byte[0];
-            return base.Encode();
+            throw new NotImplementedException();
         }
     }
 }
-
-// [1,0,1,0,3,240,0,0,200,79,0,0,0,0,0,45,155,0]
-// [1,0,2,0,3,240,0,0,200,79,0,0,0,0,0,45,127,0]
-// [0,0,2,0,3,240,0,0,201,79,0,0,0,0,0,45,194,0]
-
-// [0,0,1,0,8,53,0,0,200,79,0,0,0,0,0,45,137,0]
-// [0,0,2,0,8,53,0,0,200,79,0,0,0,0,0,45,173,0]
 

@@ -15,7 +15,7 @@ namespace Moto.Net.Mototrbo
         public Packet packet;
         public IPEndPoint ep;
 
-        public PacketEventArgs(Packet p, IPEndPoint ep) : base()
+        public PacketEventArgs(Packet p, IPEndPoint ep)
         {
             this.packet = p;
             this.ep = ep;

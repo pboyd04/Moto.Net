@@ -9,7 +9,7 @@ namespace MotoMond.Database
 {
     public class DatabaseMultiPlexer : Database
     {
-        List<IDatabase> children = new List<IDatabase>();
+        private readonly List<IDatabase> children = new List<IDatabase>();
 
         public void AddChild(IDatabase db)
         {

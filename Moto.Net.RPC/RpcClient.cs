@@ -8,7 +8,7 @@ using RabbitMQ.Client.Events;
 
 namespace Moto.Net.RPC
 {
-    public class RpcClient
+    public class RpcClient : IDisposable
     {
         private readonly IConnection connection;
         private readonly IModel cmdchannel;
@@ -17,6 +17,7 @@ namespace Moto.Net.RPC
         private readonly EventingBasicConsumer consumer;
         private readonly BlockingCollection<string> respQueue = new BlockingCollection<string>();
         private readonly IBasicProperties props;
+        private bool disposedValue;
 
         public event EventHandler GotCall;
 
@@ -90,6 +91,37 @@ namespace Moto.Net.RPC
         public void Close()
         {
             connection.Close();
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    evtchannel.Dispose();
+                    cmdchannel.Dispose();
+                    connection.Dispose();
+                }
+
+                // TODO: free unmanaged resources (unmanaged objects) and override finalizer
+                // TODO: set large fields to null
+                disposedValue = true;
+            }
+        }
+
+        // // TODO: override finalizer only if 'Dispose(bool disposing)' has code to free unmanaged resources
+        // ~RpcClient()
+        // {
+        //     // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+        //     Dispose(disposing: false);
+        // }
+
+        public void Dispose()
+        {
+            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
         }
     }
 }

@@ -11,50 +11,50 @@ namespace Moto.Net.Mototrbo
 {
     public class RTPData
     {
-        public static UInt16 gSequenceNumber = 100;
+        private static UInt16 gSequenceNumber = 100;
 
-        public byte Version;
-        public bool Padding;
+        private byte version;
+        private bool padding;
         public bool Extension;
-        public byte CSRCCount;
-        public bool Marker;
+        private byte csrcCount;
+        private bool marker;
         //94 seems to be CSBK, 94 seems to be a call
-        public byte PayloadType;
-        public UInt16 SequenceNumber;
-        public UInt32 Timestamp;
-        public UInt32 SSRCID;
+        private byte payloadType;
+        private UInt16 sequenceNumber;
+        private UInt32 timestamp;
+        private UInt32 ssrcId;
 
         public RTPData(byte PayloadType)
         {
-            this.Version = 2;
-            this.Padding = false;
+            this.version = 2;
+            this.padding = false;
             this.Extension = false;
-            this.CSRCCount = 0;
-            this.Marker = false;
-            this.PayloadType = PayloadType;
-            this.SequenceNumber = gSequenceNumber++;
-            this.Timestamp = (UInt32)(DateTime.Now.Ticks);
-            this.SSRCID = 0;
+            this.csrcCount = 0;
+            this.marker = false;
+            this.payloadType = PayloadType;
+            this.sequenceNumber = gSequenceNumber++;
+            this.timestamp = (UInt32)(DateTime.Now.Ticks);
+            this.ssrcId = 0;
         }
 
         public RTPData(byte[] data, int offset)
         {
-            this.Version = (byte)(data[offset] >> 6);
-            this.Padding = ((data[offset] & 0x20) != 0);
+            this.version = (byte)(data[offset] >> 6);
+            this.padding = ((data[offset] & 0x20) != 0);
             this.Extension = ((data[offset] & 0x10) != 0);
-            this.CSRCCount = (byte)(data[offset] & 0x0F);
-            this.Marker = ((data[offset+1] & 0x80) != 0);
-            this.PayloadType = (byte)(data[offset+1] & 0x7F);
-            this.SequenceNumber = (UInt16)(data[offset+2] << 8 | data[offset+3]);
-            this.Timestamp = (UInt32)(data[offset+4] << 24 | data[offset+5] << 16 | data[offset+6] << 8 | data[offset+7]);
-            this.SSRCID = (UInt32)(data[offset+8] << 24 | data[offset+9] << 16 | data[offset+10] << 8 | data[offset+11]);
+            this.csrcCount = (byte)(data[offset] & 0x0F);
+            this.marker = ((data[offset+1] & 0x80) != 0);
+            this.payloadType = (byte)(data[offset+1] & 0x7F);
+            this.sequenceNumber = (UInt16)(data[offset+2] << 8 | data[offset+3]);
+            this.timestamp = (UInt32)(data[offset+4] << 24 | data[offset+5] << 16 | data[offset+6] << 8 | data[offset+7]);
+            this.ssrcId = (UInt32)(data[offset+8] << 24 | data[offset+9] << 16 | data[offset+10] << 8 | data[offset+11]);
         }
 
         public byte[] Encode()
         {
             byte[] ret = new byte[12];
-            ret[0] = (byte)((this.Version << 6) | this.CSRCCount);
-            if(this.Padding)
+            ret[0] = (byte)((this.version << 6) | this.csrcCount);
+            if(this.padding)
             {
                 ret[0] |= 0x20;
             }
@@ -62,27 +62,35 @@ namespace Moto.Net.Mototrbo
             {
                 ret[0] |= 0x10;
             }
-            ret[1] = this.PayloadType;
-            if(this.Marker)
+            ret[1] = this.payloadType;
+            if(this.marker)
             {
                 ret[1] |= 0x80;
             }
-            ret[2] = (byte)(this.SequenceNumber >> 8);
-            ret[3] = (byte)this.SequenceNumber;
-            ret[4] = (byte)(this.Timestamp >> 24);
-            ret[5] = (byte)(this.Timestamp >> 16);
-            ret[6] = (byte)(this.Timestamp >> 8);
-            ret[7] = (byte)(this.Timestamp);
-            ret[8] = (byte)(this.SSRCID >> 24);
-            ret[9] = (byte)(this.SSRCID >> 16);
-            ret[10] = (byte)(this.SSRCID >> 8);
-            ret[11] = (byte)(this.SSRCID);
+            ret[2] = (byte)(this.sequenceNumber >> 8);
+            ret[3] = (byte)this.sequenceNumber;
+            ret[4] = (byte)(this.timestamp >> 24);
+            ret[5] = (byte)(this.timestamp >> 16);
+            ret[6] = (byte)(this.timestamp >> 8);
+            ret[7] = (byte)(this.timestamp);
+            ret[8] = (byte)(this.ssrcId >> 24);
+            ret[9] = (byte)(this.ssrcId >> 16);
+            ret[10] = (byte)(this.ssrcId >> 8);
+            ret[11] = (byte)(this.ssrcId);
             return ret;
         }
 
         public override string ToString()
         {
-            return base.ToString() + string.Format("Version: {0}, Padding: {1}, Extension: {2}, CSRCCount {3}, Marker: {4}, PayloadType: {5}, Sequence Number: {6}, Timestamp: {7}, SSRCID: {8}", this.Version, this.Padding, this.Extension, this.CSRCCount, this.Marker, this.PayloadType, this.SequenceNumber, this.Timestamp, this.SSRCID);
+            return base.ToString() + string.Format("Version: {0}, Padding: {1}, Extension: {2}, CSRCCount {3}, Marker: {4}, PayloadType: {5}, Sequence Number: {6}, Timestamp: {7}, SSRCID: {8}", this.version, this.padding, this.Extension, this.csrcCount, this.marker, this.payloadType, this.sequenceNumber, this.timestamp, this.ssrcId);
+        }
+
+        public UInt16 SequenceNumber
+        {
+            get
+            {
+                return this.sequenceNumber;
+            }
         }
     }
 

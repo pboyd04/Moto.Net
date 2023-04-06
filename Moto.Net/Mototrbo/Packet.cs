@@ -27,8 +27,8 @@ namespace Moto.Net.Mototrbo
 
         public static Packet Decode(Byte[] data)
         {
-            PacketType type = (PacketType)data[0];
-            switch(type)
+            PacketType pktType = (PacketType)data[0];
+            switch(pktType)
             {
                 case PacketType.XnlXCMPPacket:
                     return new XNLXCMPPacket(data);

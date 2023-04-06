@@ -38,7 +38,7 @@ namespace Moto.Net
         public event PacketHandler GotUserPacket;
         public event CallHander GotUserCall;
 
-        public Radio()
+        protected Radio()
         {
             this.activeCalls = new Dictionary<RadioID, RadioCall>();
         }

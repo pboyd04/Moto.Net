@@ -8,7 +8,7 @@ namespace Moto.Net
 {
     public class RadioID
     {
-        private UInt32 id;
+        private readonly UInt32 id;
 
         public RadioID(UInt32 id)
         {
@@ -68,10 +68,6 @@ namespace Moto.Net
             get
             {
                 return this.id;
-            }
-            set
-            {
-                this.id = value;
             }
         }
 

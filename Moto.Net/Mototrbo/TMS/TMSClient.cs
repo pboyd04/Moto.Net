@@ -82,7 +82,6 @@ namespace Moto.Net.Mototrbo.TMS
                         if (e.Packet.Type == x.Packet.Type && e.Packet.SequenceNumber == x.Packet.SequenceNumber)
                         {
                             //Drop this it was already handled from the repeater...
-                            continue;
                         }
                     }
                 }

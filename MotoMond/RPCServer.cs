@@ -52,7 +52,6 @@ namespace MotoMond
 
         protected void Consumer_Received(object model, BasicDeliverEventArgs e)
         {
-            //Console.WriteLine("Recieved {0}", e);
             string response = null;
 
             var body = e.Body;

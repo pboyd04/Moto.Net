@@ -26,7 +26,7 @@ namespace Moto.Net.Audio
 
         //Uses DSP Inovations vocoder. To decode the audio you need to get your own copy...
 
-        public AMBEConverter() : base()
+        public AMBEConverter()
         {
             this.decoderWorkingBuffer = new byte[3608];
             this.decoderWorkingBufferHandle = GCHandle.Alloc((object)this.decoderWorkingBuffer, GCHandleType.Pinned);
@@ -90,7 +90,9 @@ namespace Moto.Net.Audio
             for (int i = 0; i < 320; i++)
             {
                 if (buffer[offset + i] != (byte)0)
+                {
                     return true;
+                }
             }
             return false;
         }
@@ -100,7 +102,9 @@ namespace Moto.Net.Audio
             for (int i = 0; i < 5; i++)
             {
                 if ((int)AMBEConverter.SilenceFrame[i] != (int)buffer[offset + i])
+                {
                     return false;
+                }
             }
             return ((int)AMBEConverter.SilenceFrame[5] & 240) == ((int)buffer[offset + 7 - 2] & 240);
         }
@@ -142,7 +146,9 @@ namespace Moto.Net.Audio
                 for (int j = 0; j < 8 && srcOffset < 49; ++srcOffset)
                 {
                     if (this.encoderOutput[srcOffset])
+                    {
                         num |= (byte)(1 << 7 - j);
+                    }
                     j++;
                 }
                 buffer[offset + i] = num;

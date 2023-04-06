@@ -14,13 +14,35 @@ namespace MotoMond
 {
     public class CommandResult
     {
-        public bool Success;
-        public Exception ex;
+        private readonly bool success;
+        private readonly Exception ex;
         public Dictionary<string, object> Data;
 
-        public CommandResult()
+        public CommandResult(bool success)
         {
+            this.success = success;
             this.Data = new Dictionary<string, object>();
+        }
+
+        public CommandResult(Exception ex) : this(false)
+        {
+            this.ex = ex;
+        }
+
+        public bool Success
+        {
+            get
+            {
+                return this.success;
+            }
+        }
+
+        public Exception Ex
+        {
+            get
+            {
+                return this.ex;
+            }
         }
     }
 
@@ -84,17 +106,14 @@ namespace MotoMond
             }
             else
             {
-                CommandResult res = new CommandResult();
-                res.Success = false;
-                res.ex = new ArgumentException("Unknown command " + command);
+                CommandResult res = new CommandResult(new ArgumentException("Unknown command " + command));
                 return res;
             }
         }
 
         private CommandResult Help(string[] args)
         {
-            CommandResult res = new CommandResult();
-            res.Success = true;
+            CommandResult res = new CommandResult(true);
             res.Data["help"] = "";
             foreach(KeyValuePair<string, CMD> kv in this.Commands)
             {
@@ -108,22 +127,21 @@ namespace MotoMond
 
         private CommandResult GetRadio(string[] args)
         {
-            CommandResult res = new CommandResult();
+            CommandResult res;
             if (args.Length < 1)
             {
-                res.Success = false;
-                res.ex = new ArgumentException("Missing required argument radio ID!");
+                res = new CommandResult(new ArgumentException("Missing required argument radio ID!"));
                 return res;
             }
             uint id = uint.Parse(args[0]);
             Radio r = sys.FindRadioByID(new RadioID(id));
             if(r == null)
             {
-                res.Success = false;
+                res = new CommandResult(false);
             }
             else
             {
-                res.Success = true;
+                res = new CommandResult(true);
                 res.Data["radio"] = r;
             }
             return res;
@@ -131,63 +149,59 @@ namespace MotoMond
         
         private CommandResult GetSystem(string[] args)
         {
-            CommandResult res = new CommandResult();
-            res.Success = true;
+            CommandResult res = new CommandResult(true);
             res.Data["sys"] = this.sys;
             return res;
         }
 
         private CommandResult RadioCheck(string[] args)
         {
-            CommandResult res = new CommandResult();
+            CommandResult res;
             if (args.Length < 1)
             {
-                res.Success = false;
-                res.ex = new ArgumentException("Missing required argument radio ID!");
+                res = new CommandResult(new ArgumentException("Missing required argument radio ID!"));
                 return res;
             }
             uint id = uint.Parse(args[0]);
             float rssi = 0.0F;
             bool ret = sys.RadioCheck(new RadioID(id), ref rssi);
-            res.Success = ret;
+            res = new CommandResult(ret);
             res.Data["rssi"] = rssi;
             return res;
         }
 
         private CommandResult RadioIP(string[] args)
         {
-            CommandResult res = new CommandResult();
+            CommandResult res;
             if (args.Length < 1)
             {
-                res.Success = false;
-                res.ex = new ArgumentException("Missing required argument radio ID!");
+                res = new CommandResult(new ArgumentException("Missing required argument radio ID!"));
                 return res;
             }
             uint id = uint.Parse(args[0]);
             IPAddress ret = sys.GetIPForRadio(new RadioID(id));
-            res.Success = true;
+            res = new CommandResult(true);
             res.Data["ip"] = ret;
             return res;
         }
 
         private CommandResult RadioLocate(string[] args)
         {
-            CommandResult res = new CommandResult();
+            CommandResult res;
             if (args.Length < 1)
             {
-                res.Success = false;
-                res.ex = new ArgumentException("Missing required argument radio ID!");
+                res = new CommandResult(new ArgumentException("Missing required argument radio ID!"));
                 return res;
             }
             uint id = uint.Parse(args[0]);
             Tuple<float, float, float?> ret = lrrp.GetCurrentLocation(new RadioID(id), sys);
             if (ret.Item1 == 0.0f)
             {
-                res.Success = false;
+                res = new CommandResult(false);
             }
             else
             {
-                res.Success = true;
+                res = new CommandResult(true);
                 if (ret.Item3.HasValue)
                 {
                     res.Data["rssi"] = ret.Item3;
@@ -200,82 +214,75 @@ namespace MotoMond
 
         private CommandResult RadioStartLocate(string[] args)
         {
-            CommandResult res = new CommandResult();
+            CommandResult res;
             if (args.Length < 1)
             {
-                res.Success = false;
-                res.ex = new ArgumentException("Missing required argument radio ID!");
+                res = new CommandResult(new ArgumentException("Missing required argument radio ID!"));
                 return res;
             }
             if (args.Length < 2)
             {
-                res.Success = false;
-                res.ex = new ArgumentException("Missing required argument request id!");
+                res = new CommandResult(new ArgumentException("Missing required argument request id!"));
                 return res;
             }
             if (args.Length < 3)
             {
-                res.Success = false;
-                res.ex = new ArgumentException("Missing required argument period!");
+                res = new CommandResult(new ArgumentException("Missing required argument period!"));
                 return res;
             }
             uint id = uint.Parse(args[0]);
             uint reqid = uint.Parse(args[1]);
             uint period = uint.Parse(args[2]);
             int ret = lrrp.StartTriggeredLocate(new RadioID(id), sys, reqid, period);
-            res.Success = (ret == 0);
+            res = new CommandResult((ret == 0));
             res.Data["rc"] = (LRRPResponseCodes)ret;
             return res;
         }
 
         private CommandResult RadioStopLocate(string[] args)
         {
-            CommandResult res = new CommandResult();
+            CommandResult res;
             if (args.Length < 1)
             {
-                res.Success = false;
-                res.ex = new ArgumentException("Missing required argument radio ID!");
+                res = new CommandResult(new ArgumentException("Missing required argument radio ID!"));
                 return res;
             }
             if (args.Length < 2)
             {
-                res.Success = false;
-                res.ex = new ArgumentException("Missing required argument request id!");
+                res = new CommandResult(new ArgumentException("Missing required argument request id!"));
                 return res;
             }
             uint id = uint.Parse(args[0]);
             uint reqid = uint.Parse(args[1]);
             int ret = lrrp.StopTriggeredLocate(new RadioID(id), sys, reqid);
-            res.Success = (ret == 0);
+            res = new CommandResult((ret == 0));
             res.Data["rc"] = (LRRPResponseCodes)ret;
             return res;
         }
 
         private CommandResult RadioText(string[] args)
         {
-            CommandResult res = new CommandResult();
+            CommandResult res;
             if (args.Length < 1)
             {
-                res.Success = false;
-                res.ex = new ArgumentException("Missing required argument radio ID!");
+                res = new CommandResult(new ArgumentException("Missing required argument radio ID!"));
                 return res;
             }
             if (args.Length < 2)
             {
-                res.Success = false;
-                res.ex = new ArgumentException("Missing required argument message!");
+                res = new CommandResult(new ArgumentException("Missing required argument message!"));
                 return res;
             }
             uint id = uint.Parse(args[0]);
             string message = string.Join(" ", args.Skip(1).ToArray());
             bool ret = tms.SendText(message, new RadioID(id), sys, true);
-            res.Success = ret;
+            res = new CommandResult(ret);
             return res;
         }
 
         private CommandResult ListRadios(string[] args)
         {
-            CommandResult res = new CommandResult();
+            CommandResult res = new CommandResult(true);
             String source = "db";
             if (args.Length > 1)
             {
@@ -289,7 +296,6 @@ namespace MotoMond
             {
                 //TODO implement
             }
-            res.Success = true;
             return res;
         }
 
@@ -308,17 +314,15 @@ namespace MotoMond
 
         private CommandResult DebugRadioStatus(string[] args)
         {
-            CommandResult res = new CommandResult();
+            CommandResult res;
             if (args.Length < 1)
             {
-                res.Success = false;
-                res.ex = new ArgumentException("Missing required argument radio ID!");
+                res = new CommandResult(new ArgumentException("Missing required argument radio ID!"));
                 return res;
             }
             if (args.Length < 2)
             {
-                res.Success = false;
-                res.ex = new ArgumentException("Missing required argument status!");
+                res = new CommandResult(new ArgumentException("Missing required argument status!"));
                 return res;
             }
             RadioID id = new RadioID(uint.Parse(args[0]));
@@ -331,7 +335,7 @@ namespace MotoMond
                     r.InitXNL();
                     byte status = byte.Parse(args[1]);
                     byte[] data = r.GetRadioStatus((Moto.Net.Mototrbo.XNL.XCMP.XCMPStatus)status);
-                    res.Success = true;
+                    res = new CommandResult(true);
                     res.Data["data"] = BitConverter.ToString(data);
                     res.Data["ASCII"] = ASCIIEncoding.ASCII.GetString(data);
                 }
@@ -340,7 +344,7 @@ namespace MotoMond
             {
                 byte status = byte.Parse(args[1]);
                 byte[] data = r.GetRadioStatus((Moto.Net.Mototrbo.XNL.XCMP.XCMPStatus)status);
-                res.Success = true;
+                res = new CommandResult(true);
                 res.Data["data"] = BitConverter.ToString(data);
                 res.Data["ASCII"] = ASCIIEncoding.ASCII.GetString(data);
             }
@@ -349,17 +353,15 @@ namespace MotoMond
 
         private CommandResult DebugXCMP(string[] args)
         {
-            CommandResult res = new CommandResult();
+            CommandResult res;
             if (args.Length < 1)
             {
-                res.Success = false;
-                res.ex = new ArgumentException("Missing required argument radio ID!");
+                res = new CommandResult(new ArgumentException("Missing required argument radio ID!"));
                 return res;
             }
             if (args.Length < 2)
             {
-                res.Success = false;
-                res.ex = new ArgumentException("Missing required packet data!");
+                res = new CommandResult(new ArgumentException("Missing required packet data!"));
                 return res;
             }
             RadioID id = new RadioID(uint.Parse(args[0]));
@@ -373,14 +375,14 @@ namespace MotoMond
                 {
                     r.InitXNL();
                     byte[] data = r.SendXCMP(pkt);
-                    res.Success = true;
+                    res = new CommandResult(true);
                     res.Data["data"] = BitConverter.ToString(data);
                 }
             }
             else
             {
                 byte[] data = r.SendXCMP(pkt);
-                res.Success = true;
+                res = new CommandResult(true);
                 res.Data["data"] = BitConverter.ToString(data);
             }
             return res;
@@ -388,17 +390,15 @@ namespace MotoMond
 
         private CommandResult DebugXNL(string[] args)
         {
-            CommandResult res = new CommandResult();
+            CommandResult res;
             if (args.Length < 1)
             {
-                res.Success = false;
-                res.ex = new ArgumentException("Missing required argument radio ID!");
+                res = new CommandResult(new ArgumentException("Missing required argument radio ID!"));
                 return res;
             }
             if (args.Length < 2)
             {
-                res.Success = false;
-                res.ex = new ArgumentException("Missing required packet data!");
+                res = new CommandResult(new ArgumentException("Missing required packet data!"));
                 return res;
             }
             RadioID id = new RadioID(uint.Parse(args[0]));
@@ -412,14 +412,14 @@ namespace MotoMond
                 {
                     r.InitXNL();
                     byte[] data = r.SendXNL(pkt);
-                    res.Success = true;
+                    res = new CommandResult(true);
                     res.Data["data"] = BitConverter.ToString(data);
                 }
             }
             else
             {
                 byte[] data = r.SendXNL(pkt);
-                res.Success = true;
+                res = new CommandResult(true);
                 res.Data["data"] = BitConverter.ToString(data);
             }
             return res;

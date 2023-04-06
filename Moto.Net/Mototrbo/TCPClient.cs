@@ -72,7 +72,6 @@ namespace Moto.Net.Mototrbo
             catch(ObjectDisposedException)
             {
                 //TCPClient is being disposed, this is fine, just ignore this exception
-                return;
             }
         }
 

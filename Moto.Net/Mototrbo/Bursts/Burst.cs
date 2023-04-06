@@ -149,7 +149,7 @@ namespace Moto.Net.Mototrbo.Bursts
             if(this.hasRSSI)
             {
                 throw new NotImplementedException("Don't currently have logic to encode RSSI");
-                //length += 2;
+                // Offset 2 bytes: length += 2;
             }
             byte[] res = new byte[length];
             res[0] = (byte)this.Type;
@@ -194,10 +194,10 @@ namespace Moto.Net.Mototrbo.Bursts
             }
             res[6] = (byte)((datalen*8) >> 8);
             res[7] = (byte)(datalen*8);
-            UInt16 crc = (UInt16)(CRC.CalcCRC16CCITT(this.data, 0, this.data.Length) ^ 0x5A5A);
+            UInt16 pktCrc = (UInt16)(CRC.CalcCRC16CCITT(this.data, 0, this.data.Length) ^ 0x5A5A);
             Array.Copy(this.data, 0, res, 8, this.data.Length);
-            res[datalen + 6] = (byte)(crc >> 8);
-            res[datalen + 7] = (byte)(crc);
+            res[datalen + 6] = (byte)(pktCrc >> 8);
+            res[datalen + 7] = (byte)(pktCrc);
             if (this.hasSlotType)
             {
                 res[datalen + 9] = (byte)((this.colorCode << 4) | this.slotType);

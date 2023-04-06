@@ -50,8 +50,8 @@ namespace Moto.Net.Mototrbo.XNL
 
         public static XNLPacket Decode(Byte[] data)
         {
-            OpCode opcode = (OpCode)data[3];
-            switch (opcode)
+            OpCode pktOpCode = (OpCode)data[3];
+            switch (pktOpCode)
             {
                 case OpCode.DataMessage:
                     return new DataPacket(data);

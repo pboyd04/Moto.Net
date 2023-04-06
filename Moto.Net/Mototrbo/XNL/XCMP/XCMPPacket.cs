@@ -30,8 +30,8 @@ namespace Moto.Net.Mototrbo.XNL.XCMP
 
         public static XCMPPacket Decode(byte[] data)
         {
-            XCMPOpCode opcode = (XCMPOpCode)(data[0] << 8 | data[1]);
-            switch(opcode)
+            XCMPOpCode pktOpCode = (XCMPOpCode)(data[0] << 8 | data[1]);
+            switch(pktOpCode)
             {
                 case XCMPOpCode.DeviceinitStatusBroadcast:
                     return new DeviceInitStatusBroadcast(data);

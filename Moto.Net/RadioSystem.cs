@@ -55,7 +55,6 @@ namespace Moto.Net
         private void NullHandler(object sender, PacketEventArgs e)
         {
             //Just ignore these requests...
-            return;
         }
 
         public MasterRadio ConnectToMaster(string address, int port)
@@ -138,12 +137,12 @@ namespace Moto.Net
             SemaphoreSlim signal = new SemaphoreSlim(0, 1);
             PacketHandler handler = new PacketHandler((sender, e) => {
                 PeerListReply reply = (PeerListReply)e.packet;
-                Peer[] peers = reply.Peers;
-                for(int i = 0; i < peers.Length; i++)
+                Peer[] pktPeers = reply.Peers;
+                for(int i = 0; i < pktPeers.Length; i++)
                 {
                     if (peers[i].ID.Int == 0)
                     {
-                        this.restChannel = new IPEndPoint(IPAddress.Parse(peers[i].Address), peers[i].Port);
+                        this.restChannel = new IPEndPoint(IPAddress.Parse(pktPeers[i].Address), pktPeers[i].Port);
                     }
                     else if (peers[i].ID.Equals(this.myID))
                     {
@@ -152,7 +151,7 @@ namespace Moto.Net
                     }
                     else
                     {
-                        Radio r = new PeerRadio(this, new IPEndPoint(IPAddress.Parse(peers[i].Address), peers[i].Port));
+                        Radio r = new PeerRadio(this, new IPEndPoint(IPAddress.Parse(pktPeers[i].Address), pktPeers[i].Port));
                         r.GotUserCall += HandleUserCall;
                         this.peers.Add(r);
                         radios.Add(r);
@@ -222,6 +221,9 @@ namespace Moto.Net
                                 return;
                             }
                         }
+                        break;
+                    default:
+                        log.WarnFormat("Unknown data type {0}", dc.DataType);
                         break;
                 }
             }

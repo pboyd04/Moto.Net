@@ -46,7 +46,7 @@ namespace Moto.Net.Mototrbo.TMS
             {
                 return;
             }
-            this.encoding = (byte)(data[5]);
+            this.encoding = data[5];
             int index = 6;
             if (data[index] == 0x0d && data[index + 2] == 0x0a)
             {

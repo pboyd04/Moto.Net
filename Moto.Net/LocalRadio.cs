@@ -56,7 +56,10 @@ namespace Moto.Net
 
         protected override void Dispose(bool disposing)
         {
-            if (this.isDisposed) return;
+            if (this.isDisposed)
+            {
+                return;
+            }
 
             if (disposing)
             {

@@ -218,18 +218,18 @@ namespace MotoMond
                         }
                         if (res.Success == false)
                         {
-                            if (res.ex != null)
+                            if (res.Ex != null)
                             {
-                                Console.WriteLine("Command Failed! " + res.ex);
+                                Console.WriteLine("Command Failed! " + res.Ex);
                             }
                             else
                             {
-                                Console.WriteLine("Command Failed! " + sb.ToString());
+                                Console.WriteLine("Command Failed! " + sb);
                             }
                         }
                         else
                         {
-                            Console.WriteLine("Success! " + sb.ToString());
+                            Console.WriteLine("Success! " + sb);
                         }
                         break;
                 }
@@ -375,9 +375,6 @@ namespace MotoMond
                         {
                             Console.WriteLine("    Source IP = {0} Dest IP = {1} Protocol {2}", ((DataCall)call).Datagram.Source, ((DataCall)call).Datagram.Destination, ((DataCall)call).Datagram.Protocol);
                             Console.WriteLine("    Source Port = {0} Dest Port = {1}", ((DataCall)call).Datagram.Transport.SourcePort, ((DataCall)call).Datagram.Transport.DestinationPort);
-                            if (((DataCall)call).Datagram.Protocol == IpV4Protocol.Tcp)
-                            {
-                            }
                             Console.WriteLine("    " + BitConverter.ToString(((DataCall)call).Datagram.Transport.Payload.ToArray()));
                         }
                         break;

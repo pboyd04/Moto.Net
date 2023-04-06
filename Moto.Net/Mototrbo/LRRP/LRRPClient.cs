@@ -3,35 +3,72 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
-using System.Runtime.CompilerServices;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace Moto.Net.Mototrbo.LRRP
 {
     public class LRRPPacketEventArgs : EventArgs
     {
-        public LRRPPacket Packet;
-        public IPEndPoint Endpoint;
-        public byte CAI;
-        public RadioID ID;
-        public DateTime Timestamp;
-        public DataCall Call;
+        private readonly LRRPPacket packet;
+        private readonly IPEndPoint endpoint;
+        private byte cai;
+        private readonly RadioID id;
+        private readonly DateTime timestamp;
+        private readonly DataCall call;
 
         public LRRPPacketEventArgs(LRRPPacket p, IPEndPoint ep)
         {
-            this.Packet = p;
-            this.Endpoint = ep;
+            this.packet = p;
+            this.endpoint = ep;
             byte[] tmp = ep.Address.GetAddressBytes();
-            this.CAI = tmp[0];
-            this.ID = new RadioID(tmp, 1, 3);
-            this.Timestamp = DateTime.Now;
+            this.cai = tmp[0];
+            this.id = new RadioID(tmp, 1, 3);
+            this.timestamp = DateTime.Now;
         }
 
         public LRRPPacketEventArgs(LRRPPacket p, IPEndPoint ep, DataCall call) : this(p, ep)
         {
-            this.Call = call;
+            this.call = call;
+        }
+
+        public LRRPPacket Packet
+        {
+            get
+            {
+                return this.packet;
+            }
+        }
+
+        public RadioID ID
+        {
+            get
+            {
+                return this.id;
+            }
+        }
+
+        public DataCall Call
+        {
+            get
+            { 
+                return this.call;
+            }
+        }
+
+        public IPEndPoint Endpoint
+        {
+            get
+            {
+                return this.endpoint;
+            }
+        }
+
+        public DateTime Timestamp
+        {
+            get
+            {
+                return this.timestamp;
+            }
         }
     }
 
@@ -311,7 +348,7 @@ namespace Moto.Net.Mototrbo.LRRP
             }
             set
             {
-                this.deboune = true;
+                this.deboune = value;
             }
         }
 
@@ -382,20 +419,11 @@ namespace Moto.Net.Mototrbo.LRRP
             }
         }
 
-        // TODO: override a finalizer only if Dispose(bool disposing) above has code to free unmanaged resources.
-        // ~LRRPClient()
-        // {
-        //   // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
-        //   Dispose(false);
-        // }
-
         // This code added to correctly implement the disposable pattern.
         public void Dispose()
         {
             // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
             Dispose(true);
-            // TODO: uncomment the following line if the finalizer is overridden above.
-            // GC.SuppressFinalize(this);
         }
         #endregion
     }

@@ -16,7 +16,7 @@ namespace Moto.Net
     {
         protected readonly IPEndPoint ep;
 
-        public IPRadio(RadioSystem sys, IPEndPoint endpoint) : base()
+        protected IPRadio(RadioSystem sys, IPEndPoint endpoint)
         {
             this.sys = sys;
             this.ep = endpoint;

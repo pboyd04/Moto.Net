@@ -28,7 +28,7 @@ namespace Moto.Net
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
         protected PcapDotNet.Packets.IpV4.IpV4Datagram _datagram;
 
-        public DataCall() : base()
+        public DataCall()
         {
             this.isAudio = false;
             this.isPhoneCall = false;

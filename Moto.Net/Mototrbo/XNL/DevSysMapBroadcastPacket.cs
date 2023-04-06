@@ -12,9 +12,9 @@ namespace Moto.Net.Mototrbo.XNL
         public DevSysEntry(byte[] data, int offset)
         {
             this.DeviceType = (XNLDevType)data[offset + 0];
-            this.DeviceNumber = (byte)data[offset + 1];
+            this.DeviceNumber = data[offset + 1];
             this.XNLAddress = new Address(data, offset + 2);
-            this.AuthIndex = (byte)data[4];
+            this.AuthIndex = data[4];
         }
 
         public override string ToString()

@@ -205,7 +205,7 @@ namespace Moto.Net
                 {
                     //The burst is a retransmission ignore the error
                 }
-                throw ex;
+                throw;
             }
             this.isEnded = upkt.End;
             if(upkt.End)

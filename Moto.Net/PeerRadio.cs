@@ -49,7 +49,7 @@ namespace Moto.Net
                 while (this.id == null)
                 {
                     Thread.Sleep(50);
-                };
+                }
                 signal.Release();
             });
             this.SendPacket(pkt);
@@ -75,7 +75,10 @@ namespace Moto.Net
 
         protected override void Dispose(bool disposing)
         {
-            if (this.isDisposed) return;
+            if (this.isDisposed)
+            {
+                return;
+            }
 
             if(disposing)
             {
