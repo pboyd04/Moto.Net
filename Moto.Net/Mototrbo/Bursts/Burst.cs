@@ -124,7 +124,11 @@ namespace Moto.Net.Mototrbo.Bursts
 
         protected virtual string DataString()
         {
-            return "data: [" + string.Join(",", this.data) + "]";
+            if (this.data != null)
+            {
+                return "data: [" + string.Join(",", this.data) + "]";
+            }
+            return "data: [(null)]";
         }
 
         public override string ToString()
