@@ -22,38 +22,36 @@ namespace Moto.Net.Mototrbo.LRRP
 
         public LRRPPacket(byte[] data)
         {
-            //I'm not sure what it means when the 0x80 bit is set... just ignore it till I figure it out.
-            this.type = (LRRPPacketType)(data[0] & 0x7F);
-            //data[1] is the packet size...
+            //Ok, looks like this stuff is using VLQ (https://en.wikipedia.org/wiki/Variable-length_quantity) for most of the fields...
+            int offset = 0;
+            this.type = (LRRPPacketType)Util.ReadVLQ(data , 0, out offset);
+            int size = 0;
+            uint pktSize = Util.ReadVLQ(data , offset, out size);
+            offset += size;
             //This next bit seems to be a TLV, not sure what other tags are valid...
-            if (data[2] != 0x22)
+            if (data[offset++] != 0x22)
             {
                 throw new NotImplementedException(string.Format("Unknown tag byte {0} ({1})", data[2], BitConverter.ToString(data)));
             }
-            int offset;
-            switch (data[3] & 0x0F)
+            switch (data[offset++] & 0x0F)
             {
                 case 1:
-                    this.requestID = data[4];
-                    offset = 5;
+                    this.requestID = data[offset++];
                     break;
                 case 2:
-                    this.requestID = (UInt32)(data[4] << 8 | data[5]);
-                    offset = 6;
+                    this.requestID = (UInt32)(data[offset++] << 8 | data[offset++]);
                     break;
                 case 3:
-                    this.requestID = (UInt32)(data[4] << 16 | data[5] << 8 | data[6]);
-                    offset = 7;
+                    this.requestID = (UInt32)(data[offset++] << 16 | data[offset++] << 8 | data[offset++]);
                     break;
                 case 4:
-                    this.requestID = (UInt32)(data[4] << 24 | data[5] << 16 | data[6] << 8 | data[7]);
-                    offset = 8;
+                    this.requestID = (UInt32)(data[offset++] << 24 | data[offset++] << 16 | data[offset++] << 8 | data[offset++]);
                     break;
                 default:
-                    throw new NotImplementedException(string.Format("Unknown length byte {0}", data[3]));
+                    throw new NotImplementedException(string.Format("Unknown length byte {0}", data[offset-1]));
 
             }
-            if (data[1] + 2 < data.Length)
+            if (pktSize + 2 < data.Length)
             {
                 //When I get this back from the repeater it's got a bunch of extra junk on the end.
                 this.data = new byte[data[1] - (offset - 2)];

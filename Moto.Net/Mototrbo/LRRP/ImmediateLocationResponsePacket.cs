@@ -30,44 +30,39 @@ namespace Moto.Net.Mototrbo.LRRP
         public ImmediateLocationResponsePacket(byte[] data) : base(data)
         {
             int offset = 0;
+            int size = 0;
             while(offset < this.data.Length)
             {
                 switch(this.data[offset])
                 {
-                    case 0x34:
+                    case 0x34: //DateTime value
                         this.reportedTime = this.ReadDateTime(this.data, offset + 1);
                         offset += 6;
                         break;
-                    case 0x37:
-                        this.responseCode = (LRRPResponseCodes)this.data[offset + 1];
-                        offset += 2;
-                        if (((byte)this.responseCode & 0x80) != 0)
-                        {
-                            this.responseCode = (LRRPResponseCodes)((byte)this.responseCode << 7 | this.data[offset]);
-                            offset += 1;
-                        }
+                    case 0x37: //Result code
+                        this.responseCode = (LRRPResponseCodes)Util.ReadVLQ(this.data, offset + 1, out size);
                         break;
-                    case 0x51:
+                    case 0x51: //Circle 
                         offset += 1;
                         this.latitude = this.ReadLatitude(this.data, offset);
                         offset += 4;
                         this.longitude = this.ReadLongitude(this.data, offset);
                         offset += 4;
-                        this.radius = ReadFloat(this.data, offset);
-                        offset += 2;
+                        this.radius = ReadFloat(this.data, offset, out size);
+                        offset += size;
                         break;
-                    case 0x55:
+                    case 0x55: //Sphere
                         offset += 1;
                         this.latitude = this.ReadLatitude(this.data, offset);
                         offset += 4;
                         this.longitude = this.ReadLongitude(this.data, offset);
                         offset += 4;
-                        this.radius = ReadFloat(this.data, offset);
-                        offset += 2;
-                        this.altitude = ReadFloat(this.data, offset);
-                        offset += 2;
-                        this.altitueAccuracy = ReadFloat(this.data, offset);
-                        offset += 3;
+                        this.radius = ReadFloat(this.data, offset, out size);
+                        offset += size;
+                        this.altitude = ReadFloat(this.data, offset, out size);
+                        offset += size;
+                        this.altitueAccuracy = ReadFloat(this.data, offset, out size);
+                        offset += size;
                         break;
                     case 0x56:
                         this.horizontalDirection = this.data[offset + 1];
@@ -86,13 +81,13 @@ namespace Moto.Net.Mototrbo.LRRP
                         offset += 4;
                         this.longitude = this.ReadLongitude(this.data, offset);
                         offset += 4;
-                        this.altitude = this.ReadFloat(this.data, offset);
-                        offset += 3;
+                        this.altitude = this.ReadFloat(this.data, offset, out size);
+                        offset += size;
                         break;
                     case 0x6C:
                         offset += 1;
-                        this.horizontalSpeed = this.ReadFloat(this.data, offset);
-                        offset += 3;
+                        this.horizontalSpeed = this.ReadFloat(this.data, offset, out size);
+                        offset += size;
                         break;
                     default:
                         throw new NotImplementedException("Unknown tag " + this.data[offset]+" at offset "+offset+"("+BitConverter.ToString(this.data)+")");
@@ -123,9 +118,13 @@ namespace Moto.Net.Mototrbo.LRRP
             return (float)(tmpLong * (360.0 / 0xFFFFFFFF));
         }
 
-        protected float ReadFloat(byte[] data, int offset)
+        protected float ReadFloat(byte[] data, int offset, out int length)
         {
-            return (float)((float)data[offset] + (data[offset + 1] * 0.01));
+            int size1, size2;
+            uint int1 = Util.ReadVLQ(data, offset, out size1);
+            uint int2 = Util.ReadVLQ(data, offset + size1, out size2);
+            length = size1 + size2;
+            return (float)((float)int1 + (int2 / Math.Pow(128.0, size2)));
         }
 
         public override string ToString()
