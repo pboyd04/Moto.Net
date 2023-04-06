@@ -428,11 +428,15 @@ namespace Moto.Net
             {
                 if (disposing)
                 {
-                    if(this.master != null)
+                    this.lrrp = null; //Caller owns this make them explicitly dispose
+                    this.tms = null; //Caller owns this make them explicitly dispose
+                    if (this.master != null)
                     {
                         this.master.Dispose();
+                        this.master = null;
                     }
                     this.client.Dispose();
+                    this.client = null;
                 }
 
                 disposedValue = true;

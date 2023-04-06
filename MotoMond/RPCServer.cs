@@ -9,7 +9,7 @@ using System.Configuration;
 
 namespace MotoMond
 {
-    public class RPCServer
+    public class RPCServer : IDisposable
     {
         protected ConnectionFactory factory;
         protected IConnection conn;
@@ -18,6 +18,7 @@ namespace MotoMond
         protected EventingBasicConsumer consumer;
         protected RadioSystem sys;
         protected bool connected;
+        private bool disposedValue;
 
         public RPCServer()
         {
@@ -101,14 +102,36 @@ namespace MotoMond
 
         ~RPCServer()
         {
-            if (cmdchannel != null)
+            this.Dispose(false);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
             {
-                cmdchannel.Close();
+                if (disposing)
+                {
+                    if (cmdchannel != null)
+                    {
+                        cmdchannel.Dispose();
+                        cmdchannel = null;
+                    }
+                    if (conn != null)
+                    {
+                        conn.Dispose();
+                        conn = null;
+                    }
+                    this.connected = false;
+                }
+                disposedValue = true;
             }
-            if (conn != null)
-            {
-                conn.Close();
-            }
+        }
+
+        public void Dispose()
+        {
+            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
         }
     }
 }

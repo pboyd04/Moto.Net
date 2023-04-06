@@ -40,6 +40,7 @@ namespace Moto.Net
 
         private void SendKeepAlive(Object src, ElapsedEventArgs e)
         {
+            if (this.isDisposed) return;
             MasterKeepAliveRequest kapkt = new MasterKeepAliveRequest(this.sys.ID, this.sys.SystemType, this.sys.RegistrationFlags);
             this.SendPacket(kapkt);
             System.Timers.Timer t = (System.Timers.Timer)src;

@@ -368,9 +368,11 @@ namespace Moto.Net.Mototrbo.LRRP
             {
                 this.running = false;
                 this.thread.Abort();
+                this.thread = null;
                 if (disposing)
                 {
-                    this.client.Close();
+                    this.client.Dispose();
+                    this.client = null;
                 }
 
                 // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.

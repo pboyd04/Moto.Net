@@ -257,7 +257,8 @@ namespace Moto.Net.Mototrbo.TMS
                 this.thread.Abort();
                 if (disposing)
                 {
-                    this.client.Close();
+                    this.client.Dispose();
+                    this.client = null;
                 }
 
                 // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.

@@ -64,6 +64,11 @@ namespace Moto.Net.Mototrbo
             try
             {
                 IPEndPoint RemoteIpEndPoint = new IPEndPoint(IPAddress.Any, port);
+                if(this.rawClient == null)
+                {
+                    //We are shutting down
+                    return;
+                }
                 byte[] receiveBytes = this.rawClient.EndReceive(result, ref RemoteIpEndPoint);
                 Packet p = Packet.Decode(receiveBytes);
                 log.DebugFormat("Recieved {0} from {1}", p.ToString(), RemoteIpEndPoint.ToString());

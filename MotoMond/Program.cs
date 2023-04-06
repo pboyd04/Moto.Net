@@ -1,15 +1,9 @@
 ﻿using System;
 using System.Configuration;
 using System.Collections.Generic;
-using System.Data;
 using System.IO;
-using System.Reflection.Emit;
-using System.Threading;
 using Moto.Net;
-using Moto.Net.Mototrbo;
 using Moto.Net.Mototrbo.Bursts;
-using Moto.Net.Mototrbo.Bursts.CSBK;
-using MySql.Data.MySqlClient;
 using System.Linq;
 using System.Net;
 using Moto.Net.Mototrbo.LRRP;
@@ -35,83 +29,89 @@ namespace MotoMond
 
         static void Main(string[] args)
         {
-            srv = new RPCServer();
-            //Grab out model lookup data
-            Stream s = Assembly.GetExecutingAssembly().GetManifestResourceStream("MotoMond.MototrboModels.json");
-            using(StreamReader reader = new StreamReader(s))
+            using (srv = new RPCServer())
             {
-                String jsonString = reader.ReadToEnd();
-                modelMap = JsonSerializer.Deserialize<Dictionary<String, String>>(jsonString);
-            }
-            controlStations = new Dictionary<RadioID, IPAddress>();
-            Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
-            ConfigurationSectionGroup group = config.GetSectionGroup("Databases");
-            if (group.Sections.Count == 1)
-            {
-                db = (IDatabase)group.Sections[0];
-            }
-            else
-            {
-                db = new DatabaseMultiPlexer();
-                foreach (IDatabase child in group.Sections)
+                //Grab out model lookup data
+                Stream s = Assembly.GetExecutingAssembly().GetManifestResourceStream("MotoMond.MototrboModels.json");
+                using (StreamReader reader = new StreamReader(s))
                 {
-                    ((DatabaseMultiPlexer)db).AddChild(child);
+                    String jsonString = reader.ReadToEnd();
+                    modelMap = JsonSerializer.Deserialize<Dictionary<String, String>>(jsonString);
                 }
-            }
-            db.CreateTables();
-
-            string masterIP = "192.168.0.100";
-            int masterPort = 50000;
-            if (args.Length > 1)
-            {
-                string[] parts = args[1].Split(':');
-                masterIP = parts[0];
-                if(parts.Length > 1)
+                controlStations = new Dictionary<RadioID, IPAddress>();
+                Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+                ConfigurationSectionGroup group = config.GetSectionGroup("Databases");
+                if (group.Sections.Count == 1)
                 {
-                    masterPort = int.Parse(parts[1]);
+                    db = (IDatabase)group.Sections[0];
                 }
-            }
-
-            RadioSystemType type = (RadioSystemType)RadioSystemType.Parse(typeof(RadioSystemType), ConfigurationManager.AppSettings.Get("systemType"));
-
-            sys = new RadioSystem(uint.Parse(ConfigurationManager.AppSettings.Get("systemId")), type);
-            srv.SetSystem(sys);
-            sys.GotRadioCall += HandleUserCall;
-            Radio master = sys.ConnectToMaster(masterIP, masterPort);
-            ProcessRadio(master, "Master");
-            Radio[] radios = sys.GetPeers();
-            Console.WriteLine("Found {0} other radios...", radios.Length);
-            foreach(Radio r in radios)
-            {
-                PeerRadio pr = (PeerRadio)r;
-                pr.SendPeerRegistration();
-                ProcessRadio(r, "Peer");
-            }
-            StartNoiseFloorCollector();
-            lrrp = new LRRPClient();
-            tms = new TMSClient();
-            sys.RegisterLRRPClient(lrrp);
-            sys.RegisterTMSClient(tms);
-            System.Net.NetworkInformation.NetworkInterface[] ifaces = System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces();
-            foreach(System.Net.NetworkInformation.NetworkInterface iface in ifaces)
-            {
-                if(iface.Description.Contains("MOTOTRBO Radio"))
+                else
                 {
-                    Console.WriteLine("Found potential control station on {0}", iface.Name);
-                    var ips = iface.GetIPProperties().GatewayAddresses;
-                    using (LocalRadio lr = new LocalRadio(sys, ips[0].Address))
+                    db = new DatabaseMultiPlexer();
+                    foreach (IDatabase child in group.Sections)
                     {
-                        ProcessRadio(lr, "Control Station");
-                        controlStations.Add(lr.ID, ips[0].Address);
+                        ((DatabaseMultiPlexer)db).AddChild(child);
+                    }
+                }
+                using (db)
+                {
+                    db.CreateTables();
+
+                    string masterIP = "192.168.0.100";
+                    int masterPort = 50000;
+                    if (args.Length > 1)
+                    {
+                        string[] parts = args[1].Split(':');
+                        masterIP = parts[0];
+                        if (parts.Length > 1)
+                        {
+                            masterPort = int.Parse(parts[1]);
+                        }
+                    }
+
+                    RadioSystemType type = (RadioSystemType)RadioSystemType.Parse(typeof(RadioSystemType), ConfigurationManager.AppSettings.Get("systemType"));
+
+                    using (sys = new RadioSystem(uint.Parse(ConfigurationManager.AppSettings.Get("systemId")), type))
+                    {
+                        srv.SetSystem(sys);
+                        sys.GotRadioCall += HandleUserCall;
+                        Radio master = sys.ConnectToMaster(masterIP, masterPort);
+                        ProcessRadio(master, "Master");
+                        Radio[] radios = sys.GetPeers();
+                        Console.WriteLine("Found {0} other radios...", radios.Length);
+                        foreach (Radio r in radios)
+                        {
+                            PeerRadio pr = (PeerRadio)r;
+                            pr.SendPeerRegistration();
+                            ProcessRadio(r, "Peer");
+                        }
+                        StartNoiseFloorCollector();
+                        lrrp = new LRRPClient();
+                        tms = new TMSClient();
+                        sys.RegisterLRRPClient(lrrp);
+                        sys.RegisterTMSClient(tms);
+                        System.Net.NetworkInformation.NetworkInterface[] ifaces = System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces();
+                        foreach (System.Net.NetworkInformation.NetworkInterface iface in ifaces)
+                        {
+                            if (iface.Description.Contains("MOTOTRBO Radio"))
+                            {
+                                Console.WriteLine("Found potential control station on {0}", iface.Name);
+                                var ips = iface.GetIPProperties().GatewayAddresses;
+                                using (LocalRadio lr = new LocalRadio(sys, ips[0].Address))
+                                {
+                                    ProcessRadio(lr, "Control Station");
+                                    controlStations.Add(lr.ID, ips[0].Address);
+                                }
+                            }
+                        }
+                        CommandProcessor cmd = new CommandProcessor(sys, lrrp, tms, controlStations, db);
+                        lrrp.GotLocationData += Lrrp_GotLocationData;
+                        RunCli(cmd);
+                        lrrp.Dispose();
+                        tms.Dispose();
                     }
                 }
             }
-            CommandProcessor cmd = new CommandProcessor(sys, lrrp, tms, controlStations, db);
-            lrrp.GotLocationData += Lrrp_GotLocationData;
-            RunCli(cmd);
-            sys.Dispose();
-            lrrp.Dispose();
-            tms.Dispose();
         }
 
         private static void Lrrp_GotLocationData(object sender, LRRPPacketEventArgs e)
