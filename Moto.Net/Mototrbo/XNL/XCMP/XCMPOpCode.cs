@@ -21,6 +21,7 @@ namespace Moto.Net.Mototrbo.XNL.XCMP
         AlarmStatusRequest = 0x042E,
         AlarmStatusReply = 0x842E
     }
+    //Unknown packet: {OpCode: 0000B402, Data: 01-09-00-00-0C-01-05-00-01-00-04-00}
 
     public static class EnumExtension
     {
