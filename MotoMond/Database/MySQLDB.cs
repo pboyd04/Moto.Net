@@ -10,6 +10,7 @@ namespace MotoMond.Database
 {
     public class MySQLDB : Database
     {
+        private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
         protected MySqlConnection conn;
 
         public override void Connect()
@@ -239,7 +240,13 @@ namespace MotoMond.Database
             cmd.Parameters.AddWithValue("@slot", slot);
             cmd.Parameters.AddWithValue("@path", filename);
             cmd.Prepare();
-            cmd.ExecuteNonQuery();
+            try
+            {
+                cmd.ExecuteNonQuery();
+            } catch(MySql.Data.MySqlClient.MySqlException ex)
+            {
+                log.ErrorFormat("Failed to insert voice call into db {0}. RSSI {1}", ex.Message, rssi);
+            }
         }
 
         protected override void Dispose(bool disposing)
