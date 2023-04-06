@@ -45,6 +45,10 @@ namespace Moto.Net.Mototrbo
                 case PacketType.PrivateDataCall:
                 case PacketType.PrivateVoiceCall:
                     return new UserPacket(data);
+                case PacketType.CallStatusNotification:
+                    return new CallStatusNotificationPacket(data);
+                case PacketType.CallNotification:
+                    return new CallNotificationPacket(data);
                 default:
                     return new Packet(data);
             }
@@ -66,9 +70,18 @@ namespace Moto.Net.Mototrbo
 
         public override string ToString()
         {
-            string ret = base.ToString() + ": {PacketType: "+this.type+", ID: "+this.id+", Data: ";
-            ret += this.DataString();
-            return ret+"}";
+            StringBuilder sb = new StringBuilder(base.ToString());
+            if(Enum.IsDefined(typeof(PacketType), this.type))
+            {
+                sb.AppendFormat(": {{PacketType: {0}, ID: {1}, Data: ", this.type, this.id.ToString());
+            }
+            else
+            {
+                sb.AppendFormat(": {{PacketType: {0}, ID: {1}, Data: ", Enum.Format(typeof(PacketType), this.type, "x"), this.id.ToString());
+            }
+            sb.Append(this.DataString());
+            sb.Append("}");
+            return sb.ToString();
         }
 
         public PacketType PacketType
