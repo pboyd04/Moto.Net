@@ -5,6 +5,7 @@ using Moto.Net.Mototrbo.TMS;
 using MotoMond.Database;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Net;
 using System.Text;
@@ -99,7 +100,7 @@ namespace MotoMond
 
         public CommandResult ProcessCommand(string command, string[] args)
         {
-            string cmd = command.ToLower();
+            string cmd = command.ToLower(CultureInfo.InvariantCulture);
             if(this.Commands.ContainsKey(cmd))
             {
                 return this.Commands[cmd].Cmd(args);

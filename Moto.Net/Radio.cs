@@ -13,12 +13,32 @@ namespace Moto.Net
 {
     public class CallEventArgs : EventArgs
     {
-        public RadioCall Call;
-        public bool Handled;
+        private readonly RadioCall call;
+        private bool handled;
 
         public CallEventArgs(RadioCall call) : base()
         {
-            this.Call = call;
+            this.call = call;
+        }
+
+        public RadioCall Call
+        {
+            get
+            {
+                return this.call;
+            }
+        }
+
+        public bool IsHandled
+        {
+            get
+            {
+                return handled;
+            }
+            set
+            {
+                handled = value;
+            }
         }
     }
     public delegate void CallHander(object sender, CallEventArgs e);

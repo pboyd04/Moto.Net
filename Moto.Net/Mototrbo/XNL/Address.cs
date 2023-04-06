@@ -4,7 +4,7 @@ namespace Moto.Net.Mototrbo.XNL
 {
     public class Address
     {
-        private UInt16 address;
+        private readonly UInt16 address;
 
         public Address(UInt16 address)
         {
@@ -52,10 +52,6 @@ namespace Moto.Net.Mototrbo.XNL
             get
             {
                 return this.address;
-            }
-            set
-            {
-                this.address = value;
             }
         }
 

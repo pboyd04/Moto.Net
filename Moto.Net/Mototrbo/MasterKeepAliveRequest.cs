@@ -32,9 +32,8 @@ namespace Moto.Net.Mototrbo
         public override byte[] Encode()
         {
             this.data = new byte[9];
-            /*
-            this.data[0] = 0x45;
-            if(this.digital)
+            this.data[0] = 0x40;
+            if (this.digital)
             {
                 this.data[0] |= 0x20;
             }
@@ -42,14 +41,6 @@ namespace Moto.Net.Mototrbo
             {
                 this.data[0] |= 0x10;
             }
-            if(this.supportsCSBK)
-            {
-                this.data[3] |= 0x80;
-            }
-            this.data[3] |= 0x20;
-            this.data[4] = 0x2C;
-            */
-            //this.data[0] = 0x65; //This reports 2 channels
             this.data[0] = 0x60;
             byte[] bytes = BitConverter.GetBytes((UInt32)this.flags);
             if (BitConverter.IsLittleEndian)

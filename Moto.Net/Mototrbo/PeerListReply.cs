@@ -25,7 +25,7 @@ namespace Moto.Net.Mototrbo
 
     public class PeerListReply : Packet
     {
-        public Peer[] peers;
+        private Peer[] peers;
 
         public PeerListReply() : base(PacketType.PeerListReply)
         {

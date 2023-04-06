@@ -14,8 +14,8 @@ namespace Moto.Net.Mototrbo
 
     public class CallStatusNotificationPacket : Packet
     {
-        private TimeSlotStatus slot1;
-        private TimeSlotStatus slot2;
+        private readonly TimeSlotStatus slot1;
+        private readonly TimeSlotStatus slot2;
 
         public CallStatusNotificationPacket(RadioID id) : base(PacketType.CallStatusNotification)
         {

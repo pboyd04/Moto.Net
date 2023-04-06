@@ -28,16 +28,16 @@ namespace Moto.Net.Mototrbo
     public class CallNotificationPacket : Packet
     {
         //This is redundant...
-        private RadioID source;
+        private readonly RadioID source;
         //Parsing this as a RadioID since I assume this is what it is, but it always seems to be 0...
-        private RadioID destination;
-        private byte slot;
-        private TimeSlotStatus status;
-        private RadioID callFrom;
-        private RadioID callTo;
-        private CallType callType;
-        private bool encrypted;
-        private float rssi;
+        private readonly RadioID destination;
+        private readonly byte slot;
+        private readonly TimeSlotStatus status;
+        private readonly RadioID callFrom;
+        private readonly RadioID callTo;
+        private readonly CallType callType;
+        private readonly bool encrypted;
+        private readonly float rssi;
 
         public CallNotificationPacket(RadioID id) : base(PacketType.CallNotification)
         {

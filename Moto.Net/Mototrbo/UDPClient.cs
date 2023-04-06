@@ -1,24 +1,26 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
-using System.Net.Sockets;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Moto.Net.Mototrbo
 {
     public class PacketEventArgs : EventArgs
     {
         public Packet packet;
-        public IPEndPoint ep;
+        private readonly IPEndPoint ep;
 
         public PacketEventArgs(Packet p, IPEndPoint ep)
         {
             this.packet = p;
             this.ep = ep;
+        }
+
+        public IPEndPoint EP
+        {
+            get
+            {
+                return ep;
+            }
         }
     }
     public delegate void PacketHandler(object sender, PacketEventArgs e);

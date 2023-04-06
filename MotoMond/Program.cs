@@ -7,7 +7,6 @@ using Moto.Net.Mototrbo.Bursts;
 using System.Linq;
 using System.Net;
 using Moto.Net.Mototrbo.LRRP;
-using PcapDotNet.Packets.IpV4;
 using Moto.Net.Mototrbo.TMS;
 using System.Text;
 using System.Reflection;
@@ -16,15 +15,12 @@ using MotoMond.Database;
 
 namespace MotoMond
 {
-    class Program
+    static class Program
     {
         static IDatabase db;
         static RPCServer srv;
         static RadioSystem sys;
-        static LRRPClient lrrp;
-        static TMSClient tms;
         static Dictionary<string, string> modelMap;
-        static Dictionary<RadioID, IPAddress> controlStations;
         static System.Timers.Timer rssiWatchdog;
 
         static void Main(string[] args)
@@ -38,7 +34,7 @@ namespace MotoMond
                     String jsonString = reader.ReadToEnd();
                     modelMap = JsonSerializer.Deserialize<Dictionary<String, String>>(jsonString);
                 }
-                controlStations = new Dictionary<RadioID, IPAddress>();
+                Dictionary<RadioID, IPAddress> controlStations = new Dictionary<RadioID, IPAddress>();
                 Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
                 ConfigurationSectionGroup group = config.GetSectionGroup("Databases");
                 if (group.Sections.Count == 1)
@@ -86,8 +82,8 @@ namespace MotoMond
                             ProcessRadio(r, "Peer");
                         }
                         StartNoiseFloorCollector();
-                        lrrp = new LRRPClient();
-                        tms = new TMSClient();
+                        LRRPClient lrrp = new LRRPClient();
+                        TMSClient tms = new TMSClient();
                         sys.RegisterLRRPClient(lrrp);
                         sys.RegisterTMSClient(tms);
                         System.Net.NetworkInformation.NetworkInterface[] ifaces = System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces();
@@ -107,6 +103,7 @@ namespace MotoMond
                         CommandProcessor cmd = new CommandProcessor(sys, lrrp, tms, controlStations, db);
                         lrrp.GotLocationData += Lrrp_GotLocationData;
                         RunCli(cmd);
+                        StopNoiseFloorCollector();
                         lrrp.Dispose();
                         tms.Dispose();
                     }
@@ -242,6 +239,12 @@ namespace MotoMond
             rssiWatchdog.Elapsed += GetRSSI;
             rssiWatchdog.Enabled = true;
             rssiWatchdog.AutoReset = true;
+        }
+
+        private static void StopNoiseFloorCollector()
+        {
+            rssiWatchdog.Stop();
+            rssiWatchdog.Enabled = false;
         }
 
         private static void GetRSSI(Object src, System.Timers.ElapsedEventArgs e)

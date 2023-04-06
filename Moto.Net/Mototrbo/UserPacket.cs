@@ -13,22 +13,22 @@ namespace Moto.Net.Mototrbo
     {
         private static UInt16 gSequenceNumber = 100;
 
-        private byte version;
-        private bool padding;
-        public bool Extension;
+        private readonly byte version;
+        private readonly bool padding;
+        private readonly bool extension;
         private byte csrcCount;
         private bool marker;
         //94 seems to be CSBK, 94 seems to be a call
         private byte payloadType;
         private UInt16 sequenceNumber;
         private UInt32 timestamp;
-        private UInt32 ssrcId;
+        private readonly UInt32 ssrcId;
 
         public RTPData(byte PayloadType)
         {
             this.version = 2;
             this.padding = false;
-            this.Extension = false;
+            this.extension = false;
             this.csrcCount = 0;
             this.marker = false;
             this.payloadType = PayloadType;
@@ -41,7 +41,7 @@ namespace Moto.Net.Mototrbo
         {
             this.version = (byte)(data[offset] >> 6);
             this.padding = ((data[offset] & 0x20) != 0);
-            this.Extension = ((data[offset] & 0x10) != 0);
+            this.extension = ((data[offset] & 0x10) != 0);
             this.csrcCount = (byte)(data[offset] & 0x0F);
             this.marker = ((data[offset+1] & 0x80) != 0);
             this.payloadType = (byte)(data[offset+1] & 0x7F);
@@ -58,7 +58,7 @@ namespace Moto.Net.Mototrbo
             {
                 ret[0] |= 0x20;
             }
-            if(this.Extension)
+            if(this.extension)
             {
                 ret[0] |= 0x10;
             }
@@ -92,6 +92,14 @@ namespace Moto.Net.Mototrbo
                 return this.sequenceNumber;
             }
         }
+
+        public bool Extension
+        {
+            get
+            {
+                return this.extension;
+            }
+        }
     }
 
     public class UserPacket : Packet
@@ -123,7 +131,7 @@ namespace Moto.Net.Mototrbo
             //Burst data...
             if (this.rtp.Extension)
             {
-                throw new Exception("Have a header extenstion! Don't know how to process packet!");
+                throw new PacketParsingException("Have a header extension! Don't know how to process packet!");
             }
             else
             {

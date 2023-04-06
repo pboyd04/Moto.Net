@@ -11,11 +11,19 @@ namespace Moto.Net.Mototrbo.XNL
 {
     public class XNLEventArgs : EventArgs
     {
-        public XNLPacket Packet;
+        private readonly XNLPacket packet;
 
         public XNLEventArgs(XNLPacket pkt)
         {
-            this.Packet = pkt;
+            this.packet = pkt;
+        }
+
+        public XNLPacket Packet
+        {
+            get
+            {
+                return packet;
+            }
         }
     }
     public delegate void XNLPacketHandler(object sender, XNLEventArgs e);

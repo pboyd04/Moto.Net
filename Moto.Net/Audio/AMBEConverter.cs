@@ -12,15 +12,15 @@ namespace Moto.Net.Audio
 #pragma warning disable IDE0044 // Add readonly modifier
         private byte[] decoderWorkingBuffer;
         private GCHandle decoderWorkingBufferHandle;
-        private byte[] decoderInput;
+        private readonly byte[] decoderInput;
         private GCHandle decoderInputHandle;
-        private short[] decoderOutput;
+        private readonly short[] decoderOutput;
         private GCHandle decoderOutputHandle;
-        private byte[] encoderWorkingBuffer;
+        private readonly byte[] encoderWorkingBuffer;
         private GCHandle encoderWorkingBufferHandle;
-        private bool[] encoderOutput;
+        private readonly bool[] encoderOutput;
         private GCHandle encoderOutputHandle;
-        private short[] encoderInput;
+        private readonly short[] encoderInput;
         private GCHandle  encoderInputHandle;
 #pragma warning restore IDE0044 // Add readonly modifier
 
@@ -71,7 +71,9 @@ namespace Moto.Net.Audio
                         byte[] testBlock = new byte[320];
                         this.BlockDecode(AMBEConverter.SilenceFrame, 0, testBlock, 0);
                         if (!this.IsEmpty(testBlock, 0))
+                        {
                             return (byte[])null;
+                        }
                     }
                 }
             }
@@ -131,7 +133,7 @@ namespace Moto.Net.Audio
             for (int index = 0; index < num; ++index)
             {
                 Buffer.BlockCopy((Array)data, 320 * index, (Array)this.encoderInput, 0, 320);
-                int num2 = (int)AMBEConverter.DSPINI_DMR_Voc_Enc(Marshal.UnsafeAddrOfPinnedArrayElement<byte>(this.encoderWorkingBuffer, 0), Marshal.UnsafeAddrOfPinnedArrayElement<short>(this.encoderInput, 0), Marshal.UnsafeAddrOfPinnedArrayElement<bool>(this.encoderOutput, 0));
+                AMBEConverter.DSPINI_DMR_Voc_Enc(Marshal.UnsafeAddrOfPinnedArrayElement<byte>(this.encoderWorkingBuffer, 0), Marshal.UnsafeAddrOfPinnedArrayElement<short>(this.encoderInput, 0), Marshal.UnsafeAddrOfPinnedArrayElement<bool>(this.encoderOutput, 0));
                 this.ConvertOutput(numArray, 7 * index);
             }
             return !Array.Exists<byte>(numArray, (Predicate<byte>)(byte_0 => byte_0 > (byte)0)) ? (byte[])null : numArray;
@@ -159,7 +161,7 @@ namespace Moto.Net.Audio
         {
             get
             {
-                return new byte[7] {0xF8, 0x01, 0xA9, 0x9F, 0x8C, 0xE0, 0x80};
+                return new byte[] {0xF8, 0x01, 0xA9, 0x9F, 0x8C, 0xE0, 0x80};
             }
         }
 

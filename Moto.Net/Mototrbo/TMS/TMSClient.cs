@@ -11,12 +11,12 @@ namespace Moto.Net.Mototrbo.TMS
 {
     public class TMSMessageEventArgs : EventArgs
     {
-        public TMSMessage Packet;
-        public IPEndPoint Endpoint;
-        public byte CAI;
-        public RadioID ID;
-        public DateTime Timestamp;
-        public DataCall Call;
+        private readonly TMSMessage packet;
+        private readonly IPEndPoint endpoint;
+        private readonly byte cai;
+        private readonly RadioID id;
+        private readonly DateTime timestamp;
+        private readonly DataCall call;
 
         public TMSMessageEventArgs(TMSMessage p, IPEndPoint ep) : this(p, ep, null)
         {
@@ -25,13 +25,37 @@ namespace Moto.Net.Mototrbo.TMS
 
         public TMSMessageEventArgs(TMSMessage p, IPEndPoint ep, DataCall call)
         {
-            this.Packet = p;
-            this.Endpoint = ep;
+            this.packet = p;
+            this.endpoint = ep;
             byte[] tmp = ep.Address.GetAddressBytes();
-            this.CAI = tmp[0];
-            this.ID = new RadioID(tmp, 1, 3);
-            this.Timestamp = DateTime.Now;
-            this.Call = call;
+            this.cai = tmp[0];
+            this.id = new RadioID(tmp, 1, 3);
+            this.timestamp = DateTime.Now;
+            this.call = call;
+        }
+
+        public TMSMessage Packet
+        {
+            get
+            {
+                return packet;
+            }
+        }
+
+        public DateTime Timestamp
+        {
+            get
+            {
+                return timestamp;
+            }
+        }
+
+        public IPEndPoint Endpoint
+        {
+            get
+            {
+                return endpoint;
+            }
         }
     }
     public delegate void TMSMessageHandler(object sender, TMSMessageEventArgs e);
@@ -267,20 +291,11 @@ namespace Moto.Net.Mototrbo.TMS
             }
         }
 
-        // TODO: override a finalizer only if Dispose(bool disposing) above has code to free unmanaged resources.
-        // ~LRRPClient()
-        // {
-        //   // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
-        //   Dispose(false);
-        // }
-
         // This code added to correctly implement the disposable pattern.
         public void Dispose()
         {
             // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
             Dispose(true);
-            // TODO: uncomment the following line if the finalizer is overridden above.
-            // GC.SuppressFinalize(this);
         }
         #endregion
     }

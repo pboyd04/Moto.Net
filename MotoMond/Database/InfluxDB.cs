@@ -22,6 +22,7 @@ namespace MotoMond.Database
 
         public override void CreateTables()
         {
+            //You don't have to create tables on Influx
         }
 
         public override DBRadio ReadRadio(RadioID id)

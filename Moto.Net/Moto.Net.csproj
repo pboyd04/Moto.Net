@@ -179,6 +179,7 @@
     <Compile Include="Mototrbo\LRRP\VersionRequestPacket.cs" />
     <Compile Include="Mototrbo\LRRP\VersionResponsePacket.cs" />
     <Compile Include="IPRadio.cs" />
+    <Compile Include="Mototrbo\PacketParsingException.cs" />
     <Compile Include="Mototrbo\PeerKeepAliveRequest.cs" />
     <Compile Include="Mototrbo\PeerRegistrationRequest.cs" />
     <Compile Include="Mototrbo\RegistrationFlags.cs" />

@@ -59,13 +59,13 @@ namespace Moto.Net
             //Is the XNL Packet from the correct radio?
             if (this.ep.Equals(ep) && e.packet.ID.Equals(this.ID))
             {
-                this.FireXNLPacket(e.packet, e.ep);
+                this.FireXNLPacket(e.packet, e.EP);
             }
         }
 
         private void HandleUserPacket(object sender, PacketEventArgs e)
         {
-            this.FireUserPacket(e.packet, e.ep);
+            this.FireUserPacket(e.packet, e.EP);
         }
     }
 }

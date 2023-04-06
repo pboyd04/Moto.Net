@@ -114,7 +114,7 @@ namespace Moto.Net
                 if(intcall.From.Equals(toCheck) && intcall.To.Equals(this.myID) && intcall.DataType == CallDataType.RadioCheckAck)
                 {
                     myRSSI = intcall.RSSI;
-                    e.Handled = true;
+                    e.IsHandled = true;
                     signal.Release();
                 }
             });
@@ -140,11 +140,11 @@ namespace Moto.Net
                 Peer[] pktPeers = reply.Peers;
                 for(int i = 0; i < pktPeers.Length; i++)
                 {
-                    if (peers[i].ID.Int == 0)
+                    if (pktPeers[i].ID.Int == 0)
                     {
                         this.restChannel = new IPEndPoint(IPAddress.Parse(pktPeers[i].Address), pktPeers[i].Port);
                     }
-                    else if (peers[i].ID.Equals(this.myID))
+                    else if (pktPeers[i].ID.Equals(this.myID))
                     {
                         //This is me
                         continue;
@@ -228,7 +228,7 @@ namespace Moto.Net
                 }
             }
             this.InternalCallHandler?.Invoke(sender, e);
-            if (!e.Handled)
+            if (!e.IsHandled)
             {
                 this.GotRadioCall?.Invoke(sender, e);
             }
@@ -334,12 +334,12 @@ namespace Moto.Net
         private void HandlePeerRegisterRequest(object sender, PacketEventArgs e)
         {
             log.InfoFormat("Got register request {0}", e.packet);
-            Radio r = this.FindRadioByPacket(e.packet, e.ep);
+            Radio r = this.FindRadioByPacket(e.packet, e.EP);
             Packet resp = new PeerRegistrationReply(this.myID, this.type);
             if(r == null)
             {
                 log.Info("Replying to unknown radio...");
-                this.client.Send(resp, e.ep);
+                this.client.Send(resp, e.EP);
             }
             else
             {
@@ -356,12 +356,12 @@ namespace Moto.Net
         private void HandlePeerKeepAliveRequest(object sender, PacketEventArgs e)
         {
             log.InfoFormat("Got peer keep alive request {0}", e.packet);
-            Radio r = this.FindRadioByPacket(e.packet, e.ep);
+            Radio r = this.FindRadioByPacket(e.packet, e.EP);
             Packet resp = new PeerKeepAliveReply(this.myID, this.type);
             if (r == null)
             {
                 log.Info("Replying to unknown radio...");
-                this.client.Send(resp, e.ep);
+                this.client.Send(resp, e.EP);
             }
             else
             {
