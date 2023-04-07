@@ -21,7 +21,7 @@ namespace Moto.Net
 
         private void HandleRegistrationPacket(object sender, PacketEventArgs e)
         {
-            MasterRegistrationReply mrPkt = (MasterRegistrationReply)e.packet;
+            MasterRegistrationReply mrPkt = (MasterRegistrationReply)e.Packet;
             this.id = mrPkt.ID;
             this.sys.client.GotRegistrationReply -= this.HandleRegistrationPacket;
             log.DebugFormat("Found Master Radio {0}", this.id);
@@ -40,7 +40,10 @@ namespace Moto.Net
 
         private void SendKeepAlive(Object src, ElapsedEventArgs e)
         {
-            if (this.isDisposed) return;
+            if (this.isDisposed)
+            {
+                return;
+            }
             MasterKeepAliveRequest kapkt = new MasterKeepAliveRequest(this.sys.ID, this.sys.SystemType, this.sys.RegistrationFlags);
             this.SendPacket(kapkt);
             System.Timers.Timer t = (System.Timers.Timer)src;

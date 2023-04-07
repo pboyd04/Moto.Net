@@ -68,7 +68,10 @@ namespace Moto.Net.Mototrbo.XNL.XCMP
                     }
                     return null;
                 }
-                catch (InvalidOperationException) { }
+                catch (InvalidOperationException)
+                {
+                    //Ignore this exception
+                }
                 //TODO Timeout...
             }
         }

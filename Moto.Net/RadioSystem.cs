@@ -136,7 +136,7 @@ namespace Moto.Net
             List<Radio> radios = new List<Radio>();
             SemaphoreSlim signal = new SemaphoreSlim(0, 1);
             PacketHandler handler = new PacketHandler((sender, e) => {
-                PeerListReply reply = (PeerListReply)e.packet;
+                PeerListReply reply = (PeerListReply)e.Packet;
                 Peer[] pktPeers = reply.Peers;
                 for(int i = 0; i < pktPeers.Length; i++)
                 {
@@ -236,12 +236,12 @@ namespace Moto.Net
 
         private void RestClient_GotUserPacket(object sender, PacketEventArgs e)
         {
-            if(e.packet.ID.Equals(this.myID))
+            if(e.Packet.ID.Equals(this.myID))
             {
                 //Ignore my own packets...
                 return;
             }
-            UserPacket upkt = (UserPacket)e.packet;
+            UserPacket upkt = (UserPacket)e.Packet;
             RadioID to = upkt.Destination;
             if (activeCalls.ContainsKey(to))
             {
@@ -333,8 +333,8 @@ namespace Moto.Net
 
         private void HandlePeerRegisterRequest(object sender, PacketEventArgs e)
         {
-            log.InfoFormat("Got register request {0}", e.packet);
-            Radio r = this.FindRadioByPacket(e.packet, e.EP);
+            log.InfoFormat("Got register request {0}", e.Packet);
+            Radio r = this.FindRadioByPacket(e.Packet, e.EP);
             Packet resp = new PeerRegistrationReply(this.myID, this.type);
             if(r == null)
             {
@@ -346,8 +346,8 @@ namespace Moto.Net
                 log.InfoFormat("Replying to known radio {0}", r);
                 if(r.ID == null)
                 {
-                    log.InfoFormat("Updating Radio ID {0}", e.packet.ID);
-                    r.ID = e.packet.ID;
+                    log.InfoFormat("Updating Radio ID {0}", e.Packet.ID);
+                    r.ID = e.Packet.ID;
                 }
                 r.SendPacket(resp);
             }
@@ -355,8 +355,8 @@ namespace Moto.Net
 
         private void HandlePeerKeepAliveRequest(object sender, PacketEventArgs e)
         {
-            log.InfoFormat("Got peer keep alive request {0}", e.packet);
-            Radio r = this.FindRadioByPacket(e.packet, e.EP);
+            log.InfoFormat("Got peer keep alive request {0}", e.Packet);
+            Radio r = this.FindRadioByPacket(e.Packet, e.EP);
             Packet resp = new PeerKeepAliveReply(this.myID, this.type);
             if (r == null)
             {

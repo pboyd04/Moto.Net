@@ -11,7 +11,7 @@ namespace Moto.Net.Mototrbo.LRRP
     {
         private readonly LRRPPacket packet;
         private readonly IPEndPoint endpoint;
-        private byte cai;
+        private readonly byte cai;
         private readonly RadioID id;
         private readonly DateTime timestamp;
         private readonly DataCall call;

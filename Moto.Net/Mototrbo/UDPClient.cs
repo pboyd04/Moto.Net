@@ -6,13 +6,21 @@ namespace Moto.Net.Mototrbo
 {
     public class PacketEventArgs : EventArgs
     {
-        public Packet packet;
+        private readonly Packet packet;
         private readonly IPEndPoint ep;
 
         public PacketEventArgs(Packet p, IPEndPoint ep)
         {
             this.packet = p;
             this.ep = ep;
+        }
+
+        public Packet Packet
+        {
+            get
+            { 
+                return packet;
+            }
         }
 
         public IPEndPoint EP

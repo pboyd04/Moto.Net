@@ -39,7 +39,7 @@ namespace Moto.Net.Mototrbo.TMS
             this.type = (MessageType)(data[2] & 0x1F);
             if(data[3] > 0)
             {
-                throw new Exception("Unknown TMS format!");
+                throw new PacketParsingException("Unknown TMS format!");
             }
             this.sequenceNumber = (byte)(data[4] & 0x1F);
             if (this.type == MessageType.Ack)

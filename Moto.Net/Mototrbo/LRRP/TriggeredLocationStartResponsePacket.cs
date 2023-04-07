@@ -8,7 +8,7 @@ namespace Moto.Net.Mototrbo.LRRP
 {
     public class TriggeredLocationStartResponsePacket : LRRPPacket
     {
-        public int responseCode;
+        private readonly int responseCode;
 
         protected TriggeredLocationStartResponsePacket(LRRPPacketType type) : base(type)
         {
@@ -42,10 +42,6 @@ namespace Moto.Net.Mototrbo.LRRP
             get
             {
                 return this.responseCode;
-            }
-            set
-            {
-                this.responseCode = value;
             }
         }
 

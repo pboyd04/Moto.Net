@@ -50,7 +50,7 @@ namespace Moto.Net
             //Is the XNL Packet from the correct radio?
             if (this.ep.Equals(ep))
             {
-                this.FireXNLPacket(e.packet, e.EP);
+                this.FireXNLPacket(e.Packet, e.EP);
             }
         }
 

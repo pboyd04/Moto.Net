@@ -32,8 +32,8 @@ namespace Moto.Net.Mototrbo.XNL
     {
         protected class XNLTransaction
         {
-            XNLPacket pkt;
-            int retryCount = 0;
+            private readonly XNLPacket pkt;
+            private int retryCount;
 
             public XNLTransaction(XNLPacket pkt)
             {
@@ -100,7 +100,7 @@ namespace Moto.Net.Mototrbo.XNL
 
         private void HandleXNLPacket(object sender, PacketEventArgs e)
         {
-            XNLXCMPPacket xpkt = (XNLXCMPPacket)e.packet;
+            XNLXCMPPacket xpkt = (XNLXCMPPacket)e.Packet;
             XNLPacket xnl = xpkt.XNLData;
             switch (xnl.OpCode)
             {

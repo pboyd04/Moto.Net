@@ -23,7 +23,7 @@ namespace Moto.Net
 
         private void Client_GetPeerKeepAliveReply(object sender, PacketEventArgs e)
         {
-            if(e.packet.ID.Equals(this.ID))
+            if(e.Packet.ID.Equals(this.ID))
             {
                 System.Timers.Timer t = new System.Timers.Timer(5000);
                 t.Elapsed += this.SendKeepAlive;
@@ -36,7 +36,7 @@ namespace Moto.Net
             //Only care about replys from the same radio, need to do it by address though...
             if (e.EP.Equals(this.Endpoint))
             {
-                this.id = e.packet.ID;
+                this.id = e.Packet.ID;
             }
         }
 

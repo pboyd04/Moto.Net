@@ -16,7 +16,7 @@ namespace Moto.Net
         private readonly RadioCall call;
         private bool handled;
 
-        public CallEventArgs(RadioCall call) : base()
+        public CallEventArgs(RadioCall call)
         {
             this.call = call;
         }
@@ -255,9 +255,9 @@ namespace Moto.Net
                 SemaphoreSlim signal = new SemaphoreSlim(0, 1);
                 XNLPacket res = null;
                 PacketHandler handler = new PacketHandler((sender, e) => {
-                    if(e.packet.PacketType == PacketType.XnlXCMPPacket)
+                    if(e.Packet.PacketType == PacketType.XnlXCMPPacket)
                     {
-                        res = ((XNLXCMPPacket)e.packet).XNLData;
+                        res = ((XNLXCMPPacket)e.Packet).XNLData;
                         signal.Release();
                     }
                 });

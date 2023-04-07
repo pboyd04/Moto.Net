@@ -221,7 +221,7 @@ namespace Moto.Net.Mototrbo.TMS
             }
             set
             {
-                this.deboune = true;
+                this.deboune = value;
             }
         }
 
