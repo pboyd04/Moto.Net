@@ -9,25 +9,35 @@ namespace Moto.Net.Mototrbo.XNL.XCMP
     public enum XCMPStatus
     {
         RSSI = 0x02,
+        LowBattery = 0x04, //This returns 0 when the battery isn't low and 1 when the battery alarm is low enough for the low battery alarm
         ModelNumber = 0x07,
         SerialNumber = 0x08,
         RepeaterSerialNumber = 0x0B,
+        CallType = 0x0D, 
         RadioID = 0x0E,
         RadioName = 0x0F, //Only seems to work on repeaters for some reason... very irritating...
-        RadioAlias = 0x0F
+        RadioAlias = 0x0F,
+        PhysicalSerialNumber = 0x4B,
+    }
+
+    public enum RadioCallTypes: byte
+    {
+        Analog = 0x00,
+        Digital = 0x01,
+        CapacityPlus = 0x02,
+        CapacityPlusVoice = 0x03, //Only happens on repeaters?
+        CapacityPlusData = 0x04, //Only happens on repeaters?
     }
 }
 
 //0 - XPR5500,XPR7750e - 0
 //1 - XPR5500,XPR7750e - 0
 //3 - XPR5500 - error - XPR7750e - 0x26 - XPR8400 - 3
-//4 - XPR5500 - error - XPR7750e - 0
 //5 - XPR5500,XPR7750e - 0
 //6 - XPR5500,XPR7750e - 00-00-00-00
-//9 - XPR5500 - 7A-0D-67-DB-D9-78-A0-55-FF-00-FF-00-FF-00-FF-00 - XPR7750e - BB-52-45-32-38-06-15-24-09-08-07-09-09-0A-0E-FF
+//9 - XPR5500 - 7A-0D-67-DB-D9-78-A0-55-FF-00-FF-00-FF-00-FF-00 - XPR7750e - BB-52-45-32-38-06-15-24-09-08-07-09-09-0A-0E-FF - XPR8400 - D0-75-68-03-08-24-08-96
 //10 - XPR5500,XPR7750e - FF-FF
 //12 - XPR5500,XPR7750e - error
-//13 - XPR5500,XPR7750e - 2
 //16 - XPR5500,XPR7750e - error
 //17 - XPR5500,XPR7750e - error
 //18 - XPR5500,XPR7750e - error
@@ -72,7 +82,6 @@ namespace Moto.Net.Mototrbo.XNL.XCMP
 //57 - XPR5500,XPR7750e - error
 //58 - 73 - XPR5500 - error
 //74 - XPR5500 - hangs
-//75 - XPR5500 - 16-0E-D5-4A-6D-53-D7-DB-40-90-09-C5-B3-EF-95-1B-FD-C8-FF-D7-71-13-85-5D-06-AB-76-EC-99-66-25-22 - XPR7750e - CB-E3-50-BD-CB-E2-D4-83-44-E1-AF-51-9E-FB-64-DD-16-56-03-23-3D-CD-EA-B1-F4-08-24-38-3D-E6-3B-2D
 //76 - XPR5500 - 01-00 - XPR7750e - 01-02
 //77 - 118 - XPR5500 - error
 //119 - XPR5500 - aborts the connection
