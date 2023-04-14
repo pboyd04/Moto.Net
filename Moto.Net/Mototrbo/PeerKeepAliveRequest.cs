@@ -21,9 +21,8 @@ namespace Moto.Net.Mototrbo
         public override byte[] Encode()
         {
             this.data = new byte[5];
-            /*
-            this.data[0] = 0x45;
-            if(this.digital)
+            this.data[0] = 0x65;
+            if (this.digital)
             {
                 this.data[0] |= 0x20;
             }
@@ -31,13 +30,6 @@ namespace Moto.Net.Mototrbo
             {
                 this.data[0] |= 0x10;
             }
-            this.data[3] = 0x20;
-            if(this.supportsCSBK)
-            {
-                this.data[3] |= 0x80;
-            }
-            this.data[4] = 0x2c;*/
-            this.data[0] = 0x60;
             byte[] bytes = BitConverter.GetBytes((UInt32)this.flags);
             if (BitConverter.IsLittleEndian)
             {

@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Moto.Net.Mototrbo
 {
@@ -28,8 +24,7 @@ namespace Moto.Net.Mototrbo
         public override byte[] Encode()
         {
             this.data = new byte[9];
-            //this.data[0] = 0x45; //Still haven't fully parsed this byte. The least significant 2 nibbles are the channel slot 0 status, the next 2 are the channel slot 1 status
-            this.data[0] = 0x40;
+            this.data[0] = 0x45; //Still haven't fully parsed this byte. The least significant 2 nibbles are the channel slot 0 status, the next 2 are the channel slot 1 status
             if (this.digital)
             {
                 this.data[0] |= 0x20;

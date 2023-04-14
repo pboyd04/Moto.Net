@@ -16,23 +16,15 @@ namespace Moto.Net.Mototrbo
         {
             this.id = id;
             this.digital = true;
-            this.flags = flags;
+            this.flags = flags & ~RegistrationFlags.Software;
             this.systype = type;
-        }
-
-        //This is how I think byte 4 breaks down...
-        private enum byte4Mode : byte
-        {
-            VoiceCallSupport = 0x04,
-            DataCallSupport = 0x08,
-            SomethingElseThatIsRequired = 0x10,
-            XNLDevice = 0x20,
         }
 
         public override byte[] Encode()
         {
             this.data = new byte[9];
-            this.data[0] = 0x40;
+            this.data[0] = 0x65;
+            /*
             if (this.digital)
             {
                 this.data[0] |= 0x20;
@@ -40,8 +32,7 @@ namespace Moto.Net.Mototrbo
             else
             {
                 this.data[0] |= 0x10;
-            }
-            this.data[0] = 0x60;
+            }*/
             byte[] bytes = BitConverter.GetBytes((UInt32)this.flags);
             if (BitConverter.IsLittleEndian)
             {
@@ -56,7 +47,8 @@ namespace Moto.Net.Mototrbo
 
         protected override string DataString()
         {
-            return "{}";
+            this.Encode();
+            return "{Data: "+BitConverter.ToString(this.data)+"}";
         }
 
         public RadioSystemType SystemType

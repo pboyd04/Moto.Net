@@ -28,7 +28,7 @@ namespace Moto.Net
         protected Dictionary<RadioID, RadioCall> activeCalls;
         protected LRRPClient lrrp;
         protected TMSClient tms;
-        protected RegistrationFlags registrationFlags = RegistrationFlags.CSKBSupport | RegistrationFlags.CallMonitor | RegistrationFlags.Software | RegistrationFlags.XNLDevice | RegistrationFlags.SomethingElseThatIsRequired | RegistrationFlags.DataCallSupport | RegistrationFlags.VoiceCallSupport;
+        protected RegistrationFlags registrationFlags = RegistrationFlags.CSKBSupport | RegistrationFlags.Software | RegistrationFlags.CallMonitor | RegistrationFlags.XNLDevice | RegistrationFlags.DataCallSupport | RegistrationFlags.VoiceCallSupport;
 
         public event CallHander GotRestCall;
         public event CallHander GotRadioCall;
@@ -304,10 +304,14 @@ namespace Moto.Net
 
         public Radio FindRadioByPacket(Packet pkt, IPEndPoint ep)
         {
-            Radio r = FindRadioByID(pkt.ID);
-            if(r != null)
+            //skip getting by ID when master.ID is null otherwise this always returns the master radio even when it's the idle channel registering
+            if (this.master != null && this.master.ID != null)
             {
-                return r;
+                Radio r = FindRadioByID(pkt.ID);
+                if (r != null)
+                {
+                    return r;
+                }
             }
             return FindRadioByEndpoint(ep);
         }
@@ -357,7 +361,7 @@ namespace Moto.Net
         {
             log.InfoFormat("Got peer keep alive request {0}", e.Packet);
             Radio r = this.FindRadioByPacket(e.Packet, e.EP);
-            Packet resp = new PeerKeepAliveReply(this.myID, this.type);
+            Packet resp = new PeerKeepAliveReply(this.myID, this.type, this.registrationFlags);
             if (r == null)
             {
                 log.Info("Replying to unknown radio...");
