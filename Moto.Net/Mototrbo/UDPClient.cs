@@ -77,9 +77,11 @@ namespace Moto.Net.Mototrbo
                 if(this.rawClient == null)
                 {
                     //We are shutting down
+                    log.DebugFormat("RawClient is null");
                     return;
                 }
                 byte[] receiveBytes = this.rawClient.EndReceive(result, ref RemoteIpEndPoint);
+                this.rawClient.BeginReceive(new AsyncCallback(this.GotData), null);
                 Packet p = Packet.Decode(receiveBytes);
                 log.DebugFormat("Recieved {0} from {1}", p.ToString(), RemoteIpEndPoint.ToString());
                 PacketEventArgs e = new PacketEventArgs(p, RemoteIpEndPoint);
@@ -159,11 +161,11 @@ namespace Moto.Net.Mototrbo
                         }
                         break;
                 }
-                this.rawClient.BeginReceive(new AsyncCallback(this.GotData), null);
             }
             catch (ObjectDisposedException)
             {
                 //UDPClient is being disposed, this is fine, just ignore this exception
+                log.DebugFormat("Cleaning up UDPClient...");
                 return;
             }
         }
