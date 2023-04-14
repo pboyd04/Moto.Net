@@ -53,6 +53,8 @@ namespace Moto.Net.Mototrbo.XNL
             OpCode pktOpCode = (OpCode)data[3];
             switch (pktOpCode)
             {
+                case OpCode.MasterStatusBroadcast:
+                    return new MasterStatusBroadcast(data);
                 case OpCode.DataMessage:
                     return new DataPacket(data);
                 case OpCode.DeviceAuthKeyReply:
