@@ -18,6 +18,13 @@ namespace MotoMond.Database
         {
             string connString = this.ConnectionStringElement.InnerText;
             conn = InfluxDBClientFactory.Create(connString);
+            Task<bool> ping = conn.PingAsync();
+            ping.Wait(5000);
+            if(ping.Result == false)
+            {
+                conn.Dispose();
+                conn = null;
+            }
         }
 
         public override void CreateTables()
@@ -82,6 +89,10 @@ namespace MotoMond.Database
         public override void WriteRSSI(RadioID id, Tuple<float, float> rssis)
         {
             if (!this.ShouldHaveTable("rssi"))
+            {
+                return;
+            }
+            if(conn == null)
             {
                 return;
             }
