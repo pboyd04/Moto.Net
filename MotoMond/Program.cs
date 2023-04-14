@@ -139,6 +139,8 @@ namespace MotoMond
             Console.WriteLine("    XCMP Version = {0}", r.XCMPVersion);
             string fwver = r.FirmwareVersion;
             Console.WriteLine("    Firmware Version = {0}", fwver);
+            string cpVer = r.CodeplugVersion;
+            Console.WriteLine("    Codeplug Version = {0}", cpVer);
             string serialNum = r.SerialNumber;
             Console.WriteLine("    Serial Number = {0}", serialNum);
             string modelNum = r.ModelNumber;
