@@ -76,6 +76,10 @@ namespace Moto.Net.Mototrbo.XNL
         protected bool initSuccess;
         protected List<DevSysEntry> otherRadios;
         protected bool isDead;
+        protected bool broadcastIsRepeater;
+        protected bool explictTypeSet = false;
+        protected DevConnectionEncrypterType encrypterType;
+        //((this.r is MasterRadio) || (this.r is PeerRadio) || this.broadcastIsRepeater)
 
         public event XNLPacketHandler GotDataPacket;
 
@@ -98,6 +102,23 @@ namespace Moto.Net.Mototrbo.XNL
             this.initSuccess = this.Init();
         }
 
+        public XNLClient(Radio r, RadioID sysId, bool tcp, DevConnectionEncrypterType type)
+        {
+            this.r = r;
+            this.id = sysId;
+            this.transactionID = 0;
+            this.flags = 0;
+            this.tcpConnection = tcp;
+            this.pendingTransactions = new Dictionary<ushort, XNLTransaction>();
+            this.otherRadios = new List<DevSysEntry>();
+            this.isDead = false;
+            this.encrypterType = type;
+            this.explictTypeSet = true;
+
+            r.GotXNLXCMPPacket += new PacketHandler(this.HandleXNLPacket);
+            this.initSuccess = this.Init();
+        }
+
         private void HandleXNLPacket(object sender, PacketEventArgs e)
         {
             XNLXCMPPacket xpkt = (XNLXCMPPacket)e.Packet;
@@ -111,6 +132,12 @@ namespace Moto.Net.Mototrbo.XNL
                 case OpCode.MasterStatusBroadcast:
                     log.Debug("Got master status broadcast...");
                     this.masterID = xnl.Source;
+                    this.broadcastIsRepeater = (((MasterStatusBroadcast)xnl).Type == 0x01);
+                    if(this.explictTypeSet == false && this.broadcastIsRepeater)
+                    {
+                        this.encrypterType = DevConnectionEncrypterType.RepeaterIPSC;
+                        this.explictTypeSet = true;
+                    }
                     break;
                 case OpCode.DeviceAuthKeyReply:
                     this.StartConnection((DevAuthKeyReplyPacket)xnl);
@@ -189,12 +216,26 @@ namespace Moto.Net.Mototrbo.XNL
             log.DebugFormat("Sending connection request {0}...", pkt.TempID);
             try
             {
-                XNLPacket newPkt = new DevConnectionRequestPacket(this.masterID, pkt.TempID, new Address(0), 0x0A, 0x01, pkt.AuthKey, ((this.r is MasterRadio) || (this.r is PeerRadio)));
+                if(this.explictTypeSet == false && ((this.r is MasterRadio) || (this.r is PeerRadio)))
+                {
+                    this.encrypterType = DevConnectionEncrypterType.RepeaterIPSC;
+                }
+                else if(this.explictTypeSet == false)
+                {
+                    this.encrypterType = DevConnectionEncrypterType.Subscriber;
+                }
+                byte authIndex = 0x01;
+                if(encrypterType == DevConnectionEncrypterType.CPS)
+                {
+                    authIndex = 0x00;
+                }
+                XNLPacket newPkt = new DevConnectionRequestPacket(this.masterID, pkt.TempID, new Address(0), 0x0A, authIndex, pkt.AuthKey, encrypterType);
                 this.SendPacket(newPkt);
             }
             catch(XNLNotSupportedException)
             {
                 log.WarnFormat("Unable to finish XNL connection to device due to lack of encrypter. Operating at reduced feature set...");
+                Console.WriteLine("Unable to finish XNL connection to device due to lack of encrypter. Operating at reduced feature set...");
                 this.isDead = true;
             }
             

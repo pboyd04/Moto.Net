@@ -6,6 +6,13 @@ using System.Threading.Tasks;
 
 namespace Moto.Net.Mototrbo.XNL
 {
+    public enum DevConnectionEncrypterType
+    {
+        RepeaterIPSC,
+        Subscriber,
+        CPS
+    }
+
     public class DevConnectionRequestPacket : XNLPacket
     {
         protected Address connection;
@@ -17,20 +24,24 @@ namespace Moto.Net.Mototrbo.XNL
         {
         }
 
-        public DevConnectionRequestPacket(Address dest, Address src, Address connectionAddress, byte connectionType, byte connectionIndex, byte[] key, bool repeater) : base(OpCode.DeviceConnectionRequest)
+        public DevConnectionRequestPacket(Address dest, Address src, Address connectionAddress, byte connectionType, byte connectionIndex, byte[] key, DevConnectionEncrypterType type) : base(OpCode.DeviceConnectionRequest)
         {
             this.dest = dest;
             this.src = src;
             this.connection = connectionAddress;
             this.connectionType = connectionType;
             this.connectionIndex = connectionIndex;
-            if (repeater)
+            switch(type)
             {
-                this.key = Encrypter.Encrypt(key);
-            } 
-            else
-            {
-                this.key = Encrypter.EncryptControlStation(key);
+                case DevConnectionEncrypterType.RepeaterIPSC:
+                    this.key = Encrypter.Encrypt(key);
+                    break;
+                case DevConnectionEncrypterType.Subscriber:
+                    this.key = Encrypter.EncryptControlStation(key);
+                    break;
+                case DevConnectionEncrypterType.CPS:
+                    this.key = Encrypter.EncryptCPSRadio(key);
+                    break;
             }
             this.data = new byte[4+this.key.Length];
             this.connection.AddToArray(this.data, 0);
