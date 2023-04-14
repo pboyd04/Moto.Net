@@ -8,6 +8,10 @@ using System.Reflection;
 
 namespace Moto.Net.Mototrbo.XNL
 {
+    //There are 3 ways to encrypt data for a radio.
+    // * Encrypt - this works to talk to repeaters over IPSC protocol
+    // * EncryptControlStation - this works to talk to regualar (i.e. non-repeater) radios over IP
+    // * EncryptCPSRadio - this works to talk to either repeaters or regular radios and at a higher security level than the other two (i.e. certain commands work when you handshake this way that don't otherwise work)
     public static class Encrypter
     {
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
@@ -101,6 +105,14 @@ namespace Moto.Net.Mototrbo.XNL
             Encrypter.IntToArray(dword1, res, 0);
             Encrypter.IntToArray(dword2, res, 4);
             return res;
+        }
+
+        public static byte[] EncryptCPSRadio(byte[] data)
+        {
+            Assembly xnlDotNet = Assembly.LoadFrom("XnlAuthenticationDotNet.dll");
+            Type crypter = xnlDotNet.GetType("XnlAuthenticationDotNet.XnlAuthentication");
+            MethodInfo mi = crypter.GetMethod("EncryptAuthKey", BindingFlags.Public | BindingFlags.Static);
+            return (byte[])mi.Invoke(null, new object[] { data });
         }
 
         private static UInt32 ArrayToInt(byte[] data, int start)
