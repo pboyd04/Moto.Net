@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Moto.Net.Mototrbo.XNL.XCMP
 {
@@ -13,15 +10,25 @@ namespace Moto.Net.Mototrbo.XNL.XCMP
         RFBand = 4, //1 seems to be UHF (as does 9... and 10?)
         GPIO = 5,
         RadioType = 7, //Seems to be 0 for mobile, 1 for portable, and 2 for repeaters
-        Keypad = 9, //I think this is just boolean, 0 or 1
+        Keypad = 9, //0 for none, 1 for basic, 2 for full?
         ChannelKnob = 13, //0 means none, 255 means the free spinning ones, otherwise it is the number of channels on the dial.
         VirtualPersonality = 14, //No idea what this means
         Bluetooth = 17, //255 means no bluetooth, 253 means turned off, 0 means yes
+        Accelerometer = 19, //255 means no I think?
         GPS = 20, //255 means no GPS support, 253 means turned off, 0 means yes
-        //1, 10, and 19 have started showing up on newer radios. don't know what they mean yet...
-        //1 - 0 XPR3550,XPR3550e,XPR7550e
-        //10 - 1 XPR3550,XPR3550e
-        //19 - 255 XPR3550,XP3550e,XPR7550e
+                  //1 and 10 have started showing up on newer radios. don't know what they mean yet...
+                  //1 - 0 XPR3550,XPR3550e,XPR7550e
+                  //10 - 1 XPR3550,XPR3550e,XPR7550e
+                  //0x19 - 0xff - XPR7550e
+                  //0x1a - 0x00 - XPR7550e
+
+    }
+
+    public enum RFBand : byte
+    {
+        Unknown = 0xFF, 
+        VHF = 0x02, //136.00 MHz - 174.00 MHz according to CPS
+        UHF = 0x09, //403.00 MHz - 512.00 MHz according to CPS
     }
 
     public struct DeviceStatus
@@ -47,7 +54,7 @@ namespace Moto.Net.Mototrbo.XNL.XCMP
         protected byte revVersion;
         protected XNLDevType entityType;
         protected byte initComplete;
-        protected DeviceStatus Status;
+        protected DeviceStatus status;
 
         public DeviceInitStatusBroadcast(byte[] data) : base(data)
         {
@@ -58,15 +65,15 @@ namespace Moto.Net.Mototrbo.XNL.XCMP
             this.initComplete = this.data[4];
             if(this.initComplete == 0x00)
             {
-                this.Status.DeviceType = (XNLDevType)this.data[5];
-                this.Status.Status = (UInt16)(this.data[6] << 8 | this.data[7]);
+                this.status.DeviceType = (XNLDevType)this.data[5];
+                this.status.Status = (UInt16)(this.data[6] << 8 | this.data[7]);
                 byte len = this.data[8];
                 if (len > 0)
                 {
-                    this.Status.Descriptor = new Dictionary<XNLDevAttributes, byte>();
+                    this.status.Descriptor = new Dictionary<XNLDevAttributes, byte>();
                     for(int i = 0; i < len; i+=2)
                     {
-                        this.Status.Descriptor[(XNLDevAttributes)this.data[5 + i]] = this.data[5 + i + 1];
+                        this.status.Descriptor[(XNLDevAttributes)this.data[5 + i]] = this.data[5 + i + 1];
                     }
                 }
             }
@@ -80,7 +87,7 @@ namespace Moto.Net.Mototrbo.XNL.XCMP
             this.revVersion = byte.Parse(split[2]);
             this.entityType = entityType;
             this.initComplete = initComplete;
-            this.Status = Status;
+            this.status = Status;
             if (initComplete == 0x00)
             {
                 int length = 9;
@@ -94,9 +101,9 @@ namespace Moto.Net.Mototrbo.XNL.XCMP
                 this.data[2] = this.revVersion;
                 this.data[3] = (byte)this.entityType;
                 this.data[4] = this.initComplete;
-                this.data[5] = (byte)this.Status.DeviceType;
-                this.data[6] = (byte)(this.Status.Status >> 8);
-                this.data[7] = (byte)this.Status.Status;
+                this.data[5] = (byte)this.status.DeviceType;
+                this.data[6] = (byte)(this.status.Status >> 8);
+                this.data[7] = (byte)this.status.Status;
                 this.data[8] = (byte)(length - 9);
                 if (Status.Descriptor != null)
                 {
@@ -121,7 +128,7 @@ namespace Moto.Net.Mototrbo.XNL.XCMP
 
         public override string ToString()
         {
-            return "DeviceInitStatusBroadcast: {OpCode: " + this.opcode + ", Version: " + this.Version + ", InitComplete: " + this.initComplete + ", EntityType: " + this.entityType + ", Status: " + this.Status + "}";
+            return "DeviceInitStatusBroadcast: {OpCode: " + this.opcode + ", Version: " + this.Version + ", InitComplete: " + this.initComplete + ", EntityType: " + this.entityType + ", Status: " + this.status + "}";
         }
 
         public string Version
@@ -145,6 +152,14 @@ namespace Moto.Net.Mototrbo.XNL.XCMP
             get
             {
                 return (this.initComplete != 0x00);
+            }
+        }
+
+        public DeviceStatus Status
+        {
+            get
+            {
+                return this.status;
             }
         }
     }
