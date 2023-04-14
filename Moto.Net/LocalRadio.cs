@@ -13,6 +13,7 @@ namespace Moto.Net
     {
         protected readonly IPEndPoint ep;
         protected internal TCPClient client;
+        protected readonly bool cpsMode;
 
         public LocalRadio(RadioSystem sys, IPAddress ip)
         {
@@ -21,10 +22,22 @@ namespace Moto.Net
             this.client = new TCPClient(ep);
         }
 
+        public LocalRadio(RadioSystem sys, IPAddress ip, bool cpsMode) : this(sys, ip)
+        {
+            this.cpsMode = cpsMode;
+        }
+
         public override bool InitXNL()
         {
             this.client.GotXNLXCMPPacket += new PacketHandler(this.HandleXNLPacket);
-            this.xnlClient = new XNLClient(this, this.sys.ID);
+            if (this.cpsMode)
+            {
+                this.xnlClient = new XNLClient(this, this.sys.ID, false, DevConnectionEncrypterType.CPS);
+            }
+            else
+            {
+                this.xnlClient = new XNLClient(this, this.sys.ID);
+            }
             if (this.xnlClient.InitSuccess == false)
             {
                 return false;

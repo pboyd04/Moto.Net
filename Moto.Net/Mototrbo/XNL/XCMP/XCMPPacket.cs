@@ -45,12 +45,14 @@ namespace Moto.Net.Mototrbo.XNL.XCMP
                     return new ChannelSelectReply(data);
                 case XCMPOpCode.CloneReadReply:
                     return new CloneReadReply(data);
+                case XCMPOpCode.CPS_TanapaNumberReply:
+                    return new TanapaNumberReply(data);
                 default:
                     return new XCMPPacket(data);
             }
         }
 
-        public byte[] Encode()
+        public virtual byte[] Encode()
         {
             byte[] res = new byte[2 + this.data.Length];
             opcode.AddToArray(res, 0);

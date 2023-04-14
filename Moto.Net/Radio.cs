@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 
 using Moto.Net.Mototrbo;
@@ -141,6 +142,21 @@ namespace Moto.Net
             }
         }
 
+        public String PhysicalSerialNumber
+        {
+            get
+            {
+                if (this.xcmpClient != null)
+                {
+                    XCMPStatus status = XCMPStatus.PhysicalSerialNumber;
+                    RadioStatusReply reply = this.xcmpClient.GetRadioStatus(status);
+                    string ret = BitConverter.ToString(reply.Data);
+                    return ret.Replace("-", "");
+                }
+                return "";
+            }
+        }
+
         public String ModelNumber
         {
             get
@@ -165,6 +181,60 @@ namespace Moto.Net
                     return reply.Version;
                 }
                 return "";
+            }
+        }
+
+        public String CodeplugVersion
+        {
+            get
+            {
+                if (this.xcmpClient != null)
+                {
+                    VersionInfoReply reply = this.xcmpClient.GetVersionInfo(VersionInfoType.CodeplugVersion);
+                    if(reply.ErrorCode == XCMPErrorCode.BadParams)
+                    {
+                        reply = this.xcmpClient.GetVersionInfo(VersionInfoType.CodeplugVersion2);
+                    }
+                    return reply.Version;
+                }
+                return "";
+            }
+        }
+
+        public String BootloaderVersion
+        {
+            get
+            {
+                if (this.xcmpClient != null)
+                {
+                    VersionInfoReply reply = this.xcmpClient.GetVersionInfo(VersionInfoType.BootloaderVersion);
+                    return reply.Version;
+                }
+                return "";
+            }
+        }
+
+        public String TanapaNumber
+        {
+            get
+            {
+                if (this.xcmpClient != null)
+                {
+                    return this.xcmpClient.GetTanapaNumber();
+                }
+                return "";
+            }
+        }
+
+        public RFBand RFBand
+        {
+            get
+            {
+                if (this.xcmpClient != null)
+                {
+                    return this.xcmpClient.Band;
+                }
+                return RFBand.Unknown;
             }
         }
 
@@ -285,9 +355,21 @@ namespace Moto.Net
             return "";
         }
 
+        public void DoCloneRead(UInt16 indexType, UInt16 index, UInt16 dataType)
+        {
+            if (this.xcmpClient != null)
+            {
+                CloneReadReply reply = this.xcmpClient.DoCloneRead(indexType, index, dataType);
+            }
+        }
+
         public byte[] GetRadioStatus(XCMPStatus status)
         {
             RadioStatusReply reply = this.xcmpClient.GetRadioStatus(status);
+            if (reply == null)
+            {
+                return null;
+            }
             return reply.Data;
         }
 

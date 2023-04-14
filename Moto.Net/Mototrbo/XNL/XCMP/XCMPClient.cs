@@ -15,6 +15,7 @@ namespace Moto.Net.Mototrbo.XNL.XCMP
         protected bool ready;
         protected BlockingCollection<XCMPPacket> receivedQueue;
         protected XNLDevType devType;
+        protected RFBand rfBand;
 
         public XCMPClient(XNLClient xnlclient)
         {
@@ -145,6 +146,42 @@ namespace Moto.Net.Mototrbo.XNL.XCMP
             }
         }
 
+        public VersionInfoReply GetVersionInfo(VersionInfoType type)
+        {
+            XCMPPacket req = new VersionInfoRequest(type);
+            this.SendPacket(req);
+            while (true)
+            {
+                XCMPPacket pkt = this.WaitForPacket(5000);
+                if (pkt.OpCode == XCMPOpCode.VersionInfoReply)
+                {
+                    VersionInfoReply vir = (VersionInfoReply)pkt;
+                    return vir;
+                }
+                //Requeue this packet it wasn't for us...
+                this.receivedQueue.Add(pkt);
+                //TODO Timeout
+            }
+        }
+
+        public String GetTanapaNumber()
+        {
+            XCMPPacket req = new TanapaNumberRequest();
+            this.SendPacket(req);
+            while (true)
+            {
+                XCMPPacket pkt = this.WaitForPacket(5000);
+                if (pkt.OpCode == XCMPOpCode.CPS_TanapaNumberReply)
+                {
+                    TanapaNumberReply vir = (TanapaNumberReply)pkt;
+                    return vir.String;
+                }
+                //Requeue this packet it wasn't for us...
+                this.receivedQueue.Add(pkt);
+                //TODO Timeout
+            }
+        }
+
         public AlarmStatusReply GetAlarmStatus()
         {
             AlarmStatusRequest req = new AlarmStatusRequest();
@@ -170,6 +207,11 @@ namespace Moto.Net.Mototrbo.XNL.XCMP
             while (true)
             {
                 XCMPPacket pkt = this.WaitForPacket(5000);
+                if (pkt == null)
+                {
+                    log.Warn("Timedout waiting for channel select packet!");
+                    return null;
+                }
                 if (pkt.OpCode == XCMPOpCode.ChannelSelectReply)
                 {
                     ChannelSelectReply r = (ChannelSelectReply)pkt;
@@ -199,6 +241,32 @@ namespace Moto.Net.Mototrbo.XNL.XCMP
             }
         }
 
+        public CloneReadReply DoCloneRead(UInt16 indexType, UInt16 index, UInt16 dataType)
+        {
+            XCMPPacket req = new CloneReadRequest(indexType, index, dataType);
+            this.SendPacket(req);
+            while (true)
+            {
+                XCMPPacket pkt = this.WaitForPacket(5000);
+                if (pkt.OpCode == XCMPOpCode.CloneReadReply)
+                {
+                    CloneReadReply r = (CloneReadReply)pkt;
+                    return r;
+                }
+                //Requeue this packet it wasn't for us...
+                this.receivedQueue.Add(pkt);
+                //TODO Timeout
+            }
+        }
+
+        public RFBand Band
+        {
+            get
+            {
+                return this.rfBand;
+            }
+        }
+
         private void HandleXNLDataPacket(object sender, XNLEventArgs e)
         {
             XNLPacket pkt = e.Packet;
@@ -212,6 +280,10 @@ namespace Moto.Net.Mototrbo.XNL.XCMP
                         DeviceInitStatusBroadcast disb = (DeviceInitStatusBroadcast)xcmp;
                         version = disb.Version;
                         devType = disb.EntityType;
+                        if(disb.Status.Descriptor != null && disb.Status.Descriptor.ContainsKey(XNLDevAttributes.RFBand))
+                        {
+                            this.rfBand = (RFBand)disb.Status.Descriptor[XNLDevAttributes.RFBand];
+                        }
                         if(disb.InitComplete)
                         {
                             this.ready = true;
@@ -223,9 +295,9 @@ namespace Moto.Net.Mototrbo.XNL.XCMP
                             status.Status = 0;
                             status.DeviceType = XNLDevType.IPPeripheral;
                             status.Descriptor = new Dictionary<XNLDevAttributes, byte>();
-                            status.Descriptor[XNLDevAttributes.DeviceFamily] = 0;
-                            status.Descriptor[XNLDevAttributes.Display] = 0xFF;
-                            DeviceInitStatusBroadcast send = new DeviceInitStatusBroadcast(disb.Version, XNLDevType.RadioControlStation, 0, status);
+                            //status.Descriptor[XNLDevAttributes.DeviceFamily] = 0;
+                            //status.Descriptor[XNLDevAttributes.Display] = 0xFF;
+                            DeviceInitStatusBroadcast send = new DeviceInitStatusBroadcast(disb.Version, (XNLDevType)0, 0, status);
                             this.SendPacket(send);
                         }
                         break;
