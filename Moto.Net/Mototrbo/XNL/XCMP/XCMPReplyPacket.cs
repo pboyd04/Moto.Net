@@ -10,7 +10,8 @@ namespace Moto.Net.Mototrbo.XNL.XCMP
     {
         Success = 0,
         ReInitXNL = 0x02,
-        BadParams = 0x04
+        BadParams = 0x04,
+        SecuredCommand = 0x06, //This seems to happen when you invoke certain CPS type commands
     }
 
     public class XCMPReplyPacket : XCMPPacket
