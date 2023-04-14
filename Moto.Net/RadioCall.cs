@@ -15,6 +15,7 @@ namespace Moto.Net
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
         protected DateTime startTime;
         protected DateTime endTime;
+        private object burstsLock = new object();
         protected SortedList<UInt16, Burst> bursts;
         protected bool isGroupCall;
         protected bool isAudio;
@@ -100,12 +101,15 @@ namespace Moto.Net
             {
                 int count = 0;
                 float rssi = 0;
-                foreach(Burst b in this.bursts.Values)
+                lock (this.burstsLock)
                 {
-                    if(b.HasRSSI)
+                    foreach (Burst b in this.bursts.Values)
                     {
-                        count++;
-                        rssi += b.RSSI;
+                        if (b.HasRSSI)
+                        {
+                            count++;
+                            rssi += b.RSSI;
+                        }
                     }
                 }
                 return rssi / count;
@@ -116,7 +120,10 @@ namespace Moto.Net
         {
             get
             {
-                return bursts.Values[0].Slot;
+                lock (this.burstsLock)
+                {
+                    return bursts.Values[0].Slot;
+                }
             }
         }
 
@@ -126,34 +133,37 @@ namespace Moto.Net
             get
             {
                 List<byte> buffer = new List<byte>();
-                foreach (KeyValuePair<UInt16, Burst> pair in this.bursts)
+                lock (this.burstsLock)
                 {
-                    log.DebugFormat("Burst sequence number is {0}", pair.Key);
-                    Burst b = pair.Value;
-                    if (b.Type == DataType.DataHeader)
+                    foreach (KeyValuePair<UInt16, Burst> pair in this.bursts)
                     {
-                        continue;
-                    }
-                    else if (b.Type == DataType.RateFullData)
-                    {
-                        VoiceBurst vb = (VoiceBurst)b;
-                        for (int i = 0; i < 3; i++)
+                        log.DebugFormat("Burst sequence number is {0}", pair.Key);
+                        Burst b = pair.Value;
+                        if (b.Type == DataType.DataHeader)
                         {
-                            byte[] data = vb.Frames[i];
-                            buffer.AddRange(data);
+                            continue;
                         }
-                        continue;
+                        else if (b.Type == DataType.RateFullData)
+                        {
+                            VoiceBurst vb = (VoiceBurst)b;
+                            for (int i = 0; i < 3; i++)
+                            {
+                                byte[] data = vb.Frames[i];
+                                buffer.AddRange(data);
+                            }
+                            continue;
+                        }
+                        else if (b.Type == DataType.UnknownSmall)
+                        {
+                            //Ignore...
+                        }
+                        else
+                        {
+                            log.DebugFormat("Got packet {0}", b.Type);
+                            log.DebugFormat("Got data {0}", BitConverter.ToString(b.Data));
+                        }
+                        buffer.AddRange(b.Data);
                     }
-                    else if (b.Type == DataType.UnknownSmall)
-                    {
-                        //Ignore...
-                    }
-                    else
-                    {
-                        log.DebugFormat("Got packet {0}", b.Type);
-                        log.DebugFormat("Got data {0}", BitConverter.ToString(b.Data));
-                    }
-                    buffer.AddRange(b.Data);
                 }
                 return buffer.ToArray();
             }
@@ -167,15 +177,18 @@ namespace Moto.Net
                 {
                     AMBEConverter ac = new AMBEConverter();
                     List<byte> buffer = new List<byte>();
-                    foreach (Burst b in this.bursts.Values)
+                    lock (this.burstsLock)
                     {
-                        if (b.Type == DataType.RateFullData)
+                        foreach (Burst b in this.bursts.Values)
                         {
-                            VoiceBurst vb = (VoiceBurst)b;
-                            for (int i = 0; i < 3; i++)
+                            if (b.Type == DataType.RateFullData)
                             {
-                                byte[] data = vb.Frames[i];
-                                buffer.AddRange(ac.Decode(data));
+                                VoiceBurst vb = (VoiceBurst)b;
+                                for (int i = 0; i < 3; i++)
+                                {
+                                    byte[] data = vb.Frames[i];
+                                    buffer.AddRange(ac.Decode(data));
+                                }
                             }
                         }
                     }
@@ -197,7 +210,10 @@ namespace Moto.Net
             }
             try
             {
-                this.bursts.Add(upkt.RTP.SequenceNumber, upkt.Burst);
+                lock (this.burstsLock)
+                {
+                    this.bursts.Add(upkt.RTP.SequenceNumber, upkt.Burst);
+                }
             }
             catch(ArgumentException ex)
             {
@@ -232,11 +248,14 @@ namespace Moto.Net
         }
 
         [JsonIgnore]
-        public SortedList<UInt16, Burst> Bursts
+        public KeyValuePair<UInt16, Burst>[] Bursts
         {
             get
             {
-                return this.bursts;
+                lock (this.burstsLock)
+                {
+                    return this.bursts.ToArray();
+                }
             }
         }
     }
