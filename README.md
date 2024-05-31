@@ -28,4 +28,7 @@ But I digress, from there I used packet captures and some source I found elsewhe
 This library allows for using some of Motorola's proprietary XNL/XCMP protocol. However, to actually use it requires some constants to manipulate a payload. Those constants aren't in the repo. Ideally this should be an exercise for you to figure out how to derive them. However, I have added code that will detect if the constants aren't defined and will then take other software you may have (TRBONet) and use its built in decrypting library instead. Just drop the TRBONet.Server.exe file from an install into the same folder as the executable running Moto.Net and it will figure it out from there.
 
 # Audio decoding
-This library allows for audio decoding, however it requires an external vocoder library to decode the AMBE+ codec. That too you have to obtain on your own. If someone wants to write a layer to use an open version that is fine, but I have no desire to include the vocoder in this code.
+This library allows for audio decoding, however it requires an external vocoder library to decode the AMBE+ codec. That too you have to obtain on your own. If someone wants to write a layer to use an open version that is fine, but I have no desire to include the vocoder in this code as from what I can tell it is IP encumbered.
+
+## HW issues
+This software was built against two XPR8400 repeaters running in CapacityPlus mode. I've also tested it with an even older XPR8300. I have not however had the opportunity to test this with any newer repeaters. So there may be some issues on newer repeaters. I will absolutely try to support pulls that try and bring in newer repeaters.
