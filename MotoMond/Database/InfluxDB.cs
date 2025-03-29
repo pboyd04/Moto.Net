@@ -32,7 +32,7 @@ namespace MotoMond.Database
             //You don't have to create tables on Influx
         }
 
-        public override DBRadio ReadRadio(RadioID id)
+        public override DBRadio ReadRadio(Moto.Net.RadioID id)
         {
             if (!this.ShouldHaveTable("radio"))
             {
@@ -50,7 +50,7 @@ namespace MotoMond.Database
             throw new NotImplementedException();
         }
 
-        public override bool SetNameByID(RadioID id, string name)
+        public override bool SetNameByID(Moto.Net.RadioID id, string name)
         {
             if (!this.ShouldHaveTable("radio"))
             {

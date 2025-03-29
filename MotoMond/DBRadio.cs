@@ -79,7 +79,7 @@ namespace MotoMond
             }
         }
 
-        public RadioID ID
+        public Moto.Net.RadioID ID
         {
             get
             {

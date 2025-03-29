@@ -41,13 +41,13 @@ namespace MotoMond.Database
 
         void Connect();
         void CreateTables();
-        string UpdateConnectedRadio(RadioID id, string serialNum, string modelNum, string fwver);
-        bool SetNameByID(RadioID id, string name);
+        string UpdateConnectedRadio(Moto.Net.RadioID id, string serialNum, string modelNum, string fwver);
+        bool SetNameByID(Moto.Net.RadioID id, string name);
         List<DBRadio> ReadRadios();
-        DBRadio ReadRadio(RadioID id);
-        void WriteVoiceCall(RadioID from, RadioID to, DateTime start, DateTime end, float rssi, int slot, string filename);
+        DBRadio ReadRadio(Moto.Net.RadioID id);
+        void WriteVoiceCall(Moto.Net.RadioID from, Moto.Net.RadioID to, DateTime start, DateTime end, float rssi, int slot, string filename);
         void UpdateRadio(DBRadio radio);
-        void WriteRSSI(RadioID id, Tuple<float, float> rssis);
-        void WriteLocation(RadioID id, float lat, float lon, float? rssi);
+        void WriteRSSI(Moto.Net.RadioID id, Tuple<float, float> rssis);
+        void WriteLocation(Moto.Net.RadioID id, float lat, float lon, float? rssi);
     }
 }

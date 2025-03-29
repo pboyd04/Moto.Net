@@ -22,7 +22,7 @@ namespace MotoMond.Database
             }
         }
 
-        public override void WriteLocation(RadioID id, float lat, float lon, float? rssi)
+        public override void WriteLocation(Moto.Net.RadioID id, float lat, float lon, float? rssi)
         {
             foreach (IDatabase db in children)
             {
@@ -30,7 +30,7 @@ namespace MotoMond.Database
             }
         }
 
-        public override bool SetNameByID(RadioID id, string name)
+        public override bool SetNameByID(Moto.Net.RadioID id, string name)
         {
             bool ret = false;
             foreach (IDatabase db in children)
@@ -44,7 +44,7 @@ namespace MotoMond.Database
             return ret;
         }
 
-        public override string UpdateConnectedRadio(RadioID id, string serialNum, string modelNum, string fwver)
+        public override string UpdateConnectedRadio(Moto.Net.RadioID id, string serialNum, string modelNum, string fwver)
         {
             string ret = String.Empty;
             foreach (IDatabase db in children)
@@ -59,7 +59,7 @@ namespace MotoMond.Database
             return ret;
         }
 
-        public override DBRadio ReadRadio(RadioID id)
+        public override DBRadio ReadRadio(Moto.Net.RadioID id)
         {
             foreach(IDatabase db in children)
             {

@@ -113,7 +113,7 @@ namespace MotoMond.Database
             return ret;
         }
 
-        public override bool SetNameByID(RadioID id, string name)
+        public override bool SetNameByID(Moto.Net.RadioID id, string name)
         {
             bool success = false;
             string sql;
@@ -145,7 +145,7 @@ namespace MotoMond.Database
             return success;
         }
 
-        public override string UpdateConnectedRadio(RadioID id, string serialNum, string modelNum, string fwver)
+        public override string UpdateConnectedRadio(Moto.Net.RadioID id, string serialNum, string modelNum, string fwver)
         {
             if(!this.ShouldHaveTable("connectedRadios"))
             {

@@ -19,7 +19,7 @@ namespace MotoMond
     {
         static IDatabase db;
         static RPCServer srv;
-        static RadioSystem sys;
+        static Moto.Net.RadioSystem sys;
         static Dictionary<string, string> modelMap;
         static System.Timers.Timer rssiWatchdog;
 
